@@ -18,16 +18,16 @@
   <div class="split-layout">
     <section class="panel">
       <form class="form-grid" novalidate [formGroup]="form" (ngSubmit)="submit()">
-        <div class="field" [class.field-invalid]="hasFieldError('name')">
-          <label for="name">Nombre</label>
+        <div class="field" [class.field-invalid]="hasFieldError('full_name')">
+          <label for="full_name">Nombre</label>
           <input
-            id="name"
+            id="full_name"
             type="text"
-            formControlName="name"
-            [attr.aria-invalid]="hasFieldError('name')"
+            formControlName="full_name"
+            [attr.aria-invalid]="hasFieldError('full_name')"
           />
-          @if (hasFieldError('name')) {
-            <p class="field-error">{{ getFieldError('name') }}</p>
+          @if (hasFieldError('full_name')) {
+            <p class="field-error">{{ getFieldError('full_name') }}</p>
           }
         </div>
 
@@ -49,20 +49,17 @@
           }
         </div>
 
-        <div class="field" [class.field-invalid]="hasFieldError('organization')">
-          <label for="organization">Organizacion</label>
+        <div class="field">
+          <label for="is_active">Estado</label>
           <input
-            id="organization"
+            id="is_active"
             type="text"
-            formControlName="organization"
-            [attr.aria-invalid]="hasFieldError('organization')"
+            [value]="form.controls.is_active.getRawValue() ? 'Activo' : 'Inactivo'"
+            readonly
           />
-          @if (hasFieldError('organization')) {
-            <p class="field-error">{{ getFieldError('organization') }}</p>
-          }
         </div>
 
-        <div class="field field-full">
+        <div class="field">
           <label for="role">Rol</label>
           <input id="role" type="text" formControlName="role" />
         </div>

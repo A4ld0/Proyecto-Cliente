@@ -3,9 +3,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import {
-  MATERIAL_OPTIONS,
   REQUEST_STATUSES,
-  REQUEST_STATUS_LABELS
+  REQUEST_STATUS_LABELS,
+  REQUEST_TYPE_LABELS,
+  REQUEST_TYPES
 } from '../../../../core/constants/printlab.constants';
 import { RequestsService, UsersService } from '../../../../core/services';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
@@ -18,6 +19,7 @@ import {
   PrintRequest,
   PrintRequestPayload,
   RequestStatus,
+  RequestType,
   User
 } from '../../../../interfaces';
 
@@ -37,7 +39,8 @@ export class AdminRequestsPageComponent {
   readonly clientOptions = computed(() => this.users().filter((user) => user.role === 'CLIENT'));
   readonly requestStatuses = REQUEST_STATUSES;
   readonly requestStatusLabels = REQUEST_STATUS_LABELS;
-  readonly materialOptions = MATERIAL_OPTIONS;
+  readonly requestTypes = REQUEST_TYPES;
+  readonly requestTypeLabels = REQUEST_TYPE_LABELS;
   readonly isLoading = signal(true);
   readonly isSaving = signal(false);
   readonly editingId = signal<string | null>(null);
@@ -54,13 +57,8 @@ export class AdminRequestsPageComponent {
       minlength: 'La descripcion debe tener al menos 10 caracteres.',
       maxlength: 'La descripcion no debe exceder 500 caracteres.'
     },
-    material: {
-      required: 'Selecciona un material.'
-    },
-    quantity: {
-      required: 'Ingresa la cantidad.',
-      min: 'La cantidad debe ser mayor o igual a 1.',
-      max: 'La cantidad no debe exceder 1000 piezas.'
+    request_type: {
+      required: 'Selecciona el tipo de solicitud.'
     },
     status: {
       required: 'Selecciona el estado.'
@@ -79,13 +77,11 @@ export class AdminRequestsPageComponent {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(10), Validators.maxLength(500)]
     }),
-    material: new FormControl('PLA', { nonNullable: true, validators: [Validators.required] }),
-    quantity: new FormControl(1, {
+    request_type: new FormControl('GENERAL_3D', {
       nonNullable: true,
-      validators: [Validators.required, Validators.min(1), Validators.max(1000)]
+      validators: [Validators.required]
     }),
     status: new FormControl('PENDING', { nonNullable: true, validators: [Validators.required] }),
-    due_date: new FormControl('', { nonNullable: true }),
     client_id: new FormControl('', { nonNullable: true, validators: [Validators.required] })
   });
 
@@ -117,7 +113,7 @@ export class AdminRequestsPageComponent {
   }
 
   requestClientName(clientId: string): string {
-    return this.users().find((user) => user.id === clientId)?.name ?? clientId;
+    return this.users().find((user) => user.id === clientId)?.full_name ?? clientId;
   }
 
   editRequest(request: PrintRequest): void {
@@ -125,11 +121,9 @@ export class AdminRequestsPageComponent {
     this.successMessage.set('');
     this.form.patchValue({
       title: request.title,
-      description: request.description,
-      material: request.material,
-      quantity: request.quantity,
+      description: request.description ?? '',
+      request_type: request.request_type,
       status: request.status,
-      due_date: request.due_date ? request.due_date.slice(0, 10) : '',
       client_id: request.client_id
     });
   }
@@ -139,10 +133,8 @@ export class AdminRequestsPageComponent {
     this.form.reset({
       title: '',
       description: '',
-      material: 'PLA',
-      quantity: 1,
+      request_type: 'GENERAL_3D',
       status: 'PENDING',
-      due_date: '',
       client_id: this.clientOptions()[0]?.id ?? ''
     });
   }
@@ -160,11 +152,9 @@ export class AdminRequestsPageComponent {
     const rawValue = this.form.getRawValue();
     const payload: PrintRequestPayload = {
       title: rawValue.title,
-      description: rawValue.description,
-      material: rawValue.material,
-      quantity: rawValue.quantity,
+      description: rawValue.description || null,
+      request_type: rawValue.request_type as RequestType,
       status: rawValue.status as RequestStatus,
-      due_date: rawValue.due_date || null,
       client_id: rawValue.client_id
     };
 
@@ -187,7 +177,7 @@ export class AdminRequestsPageComponent {
   }
 
   async deleteRequest(request: PrintRequest): Promise<void> {
-    if (!window.confirm(`¿Deseas eliminar la solicitud "${request.title}"?`)) {
+    if (!window.confirm(`Deseas eliminar la solicitud "${request.title}"?`)) {
       return;
     }
 
@@ -205,12 +195,12 @@ export class AdminRequestsPageComponent {
     }
   }
 
-  statusClass(status: string): string {
-    if (status === 'REJECTED') {
+  statusClass(status: RequestStatus): string {
+    if (status === 'CANCELED') {
       return 'danger';
     }
 
-    if (['IN_REVIEW', 'PENDING'].includes(status)) {
+    if (['PENDING', 'IN_REVIEW'].includes(status)) {
       return 'warn';
     }
 

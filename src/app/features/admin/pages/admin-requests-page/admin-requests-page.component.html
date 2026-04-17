@@ -3,7 +3,7 @@
     <div class="page-title">
       <span class="eyebrow">Admin</span>
       <h1>Solicitudes</h1>
-      <p>Organiza, actualiza y asigna solicitudes para dar continuidad al trabajo.</p>
+      <p>Organiza, actualiza y asigna solicitudes segun el esquema real de la plataforma.</p>
     </div>
   </div>
 
@@ -48,33 +48,19 @@
           }
         </div>
 
-        <div class="field" [class.field-invalid]="hasFieldError('material')">
-          <label for="material">Material</label>
+        <div class="field" [class.field-invalid]="hasFieldError('request_type')">
+          <label for="request_type">Tipo</label>
           <select
-            id="material"
-            formControlName="material"
-            [attr.aria-invalid]="hasFieldError('material')"
+            id="request_type"
+            formControlName="request_type"
+            [attr.aria-invalid]="hasFieldError('request_type')"
           >
-            @for (material of materialOptions; track material) {
-              <option [value]="material">{{ material }}</option>
+            @for (requestType of requestTypes; track requestType) {
+              <option [value]="requestType">{{ requestTypeLabels[requestType] }}</option>
             }
           </select>
-          @if (hasFieldError('material')) {
-            <p class="field-error">{{ getFieldError('material') }}</p>
-          }
-        </div>
-
-        <div class="field" [class.field-invalid]="hasFieldError('quantity')">
-          <label for="quantity">Cantidad</label>
-          <input
-            id="quantity"
-            type="number"
-            min="1"
-            formControlName="quantity"
-            [attr.aria-invalid]="hasFieldError('quantity')"
-          />
-          @if (hasFieldError('quantity')) {
-            <p class="field-error">{{ getFieldError('quantity') }}</p>
+          @if (hasFieldError('request_type')) {
+            <p class="field-error">{{ getFieldError('request_type') }}</p>
           }
         </div>
 
@@ -90,11 +76,6 @@
           }
         </div>
 
-        <div class="field">
-          <label for="due_date">Fecha compromiso</label>
-          <input id="due_date" type="date" formControlName="due_date" />
-        </div>
-
         <div class="field field-full" [class.field-invalid]="hasFieldError('client_id')">
           <label for="client_id">Cliente</label>
           <select
@@ -103,7 +84,7 @@
             [attr.aria-invalid]="hasFieldError('client_id')"
           >
             @for (client of clientOptions(); track client.id) {
-              <option [value]="client.id">{{ client.name }} | {{ client.email }}</option>
+              <option [value]="client.id">{{ client.full_name }} | {{ client.email }}</option>
             }
           </select>
           @if (hasFieldError('client_id')) {
@@ -135,10 +116,9 @@
               <tr>
                 <th>Titulo</th>
                 <th>Cliente</th>
+                <th>Tipo</th>
                 <th>Estado</th>
-                <th>Material</th>
-                <th>Cantidad</th>
-                <th>Entrega</th>
+                <th>Creada</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -147,9 +127,10 @@
                 <tr>
                   <td>
                     <strong>{{ request.title }}</strong>
-                    <p class="muted">{{ request.description }}</p>
+                    <p class="muted">{{ request.description || 'Sin descripcion' }}</p>
                   </td>
                   <td>{{ requestClientName(request.client_id) }}</td>
+                  <td>{{ requestTypeLabels[request.request_type] }}</td>
                   <td>
                     <span
                       class="status-chip"
@@ -159,9 +140,7 @@
                       {{ requestStatusLabels[request.status] }}
                     </span>
                   </td>
-                  <td>{{ request.material }}</td>
-                  <td>{{ request.quantity }}</td>
-                  <td>{{ request.due_date ? (request.due_date | date: 'mediumDate') : 'Sin fecha' }}</td>
+                  <td>{{ request.created_at ? (request.created_at | date: 'medium') : 'Sin fecha' }}</td>
                   <td>
                     <div class="actions">
                       <button class="button-secondary" type="button" (click)="editRequest(request)">

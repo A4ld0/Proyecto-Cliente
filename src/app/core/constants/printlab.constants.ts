@@ -1,4 +1,4 @@
-import { OrderStatus, RequestStatus, UserRole } from '../../interfaces';
+import { OrderStatus, QuoteStatus, RequestStatus, RequestType, UserRole } from '../../interfaces';
 
 export const USER_ROLES: UserRole[] = ['ADMIN', 'CLIENT'];
 export const USER_ROLE_LABELS: Record<UserRole, string> = {
@@ -9,35 +9,45 @@ export const USER_ROLE_LABELS: Record<UserRole, string> = {
 export const REQUEST_STATUSES: RequestStatus[] = [
   'PENDING',
   'IN_REVIEW',
-  'APPROVED',
-  'REJECTED',
-  'IN_PROGRESS',
-  'DONE'
+  'QUOTED',
+  'CANCELED',
+  'CLOSED'
 ];
 export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
   PENDING: 'Pendiente',
   IN_REVIEW: 'En revision',
-  APPROVED: 'Aprobada',
-  REJECTED: 'Rechazada',
-  IN_PROGRESS: 'En produccion',
-  DONE: 'Completada'
+  QUOTED: 'Cotizada',
+  CANCELED: 'Cancelada',
+  CLOSED: 'Cerrada'
 };
 
 export const ORDER_STATUSES: OrderStatus[] = [
-  'CREATED',
-  'PAID',
+  'QUEUE',
   'PRINTING',
+  'POSTPROCESS',
   'READY',
   'DELIVERED',
-  'CANCELLED'
+  'CANCELED'
 ];
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  CREATED: 'Creado',
-  PAID: 'Pagado',
+  QUEUE: 'En cola',
   PRINTING: 'En impresion',
+  POSTPROCESS: 'Postproceso',
   READY: 'Listo para entrega',
   DELIVERED: 'Entregado',
-  CANCELLED: 'Cancelado'
+  CANCELED: 'Cancelado'
 };
 
-export const MATERIAL_OPTIONS = ['PLA', 'ABS', 'PETG', 'Resina', 'TPU'];
+export const REQUEST_TYPES: RequestType[] = ['CUTTER', 'GENERAL_3D'];
+export const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
+  CUTTER: 'Corte laser',
+  GENERAL_3D: 'Impresion 3D general'
+};
+
+export const QUOTE_STATUS_LABELS: Record<QuoteStatus, string> = {
+  DRAFT: 'Borrador',
+  SENT: 'Enviada',
+  ACCEPTED: 'Aceptada',
+  REJECTED: 'Rechazada',
+  EXPIRED: 'Vencida'
+};

@@ -3,9 +3,10 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import {
-  MATERIAL_OPTIONS,
   REQUEST_STATUSES,
-  REQUEST_STATUS_LABELS
+  REQUEST_STATUS_LABELS,
+  REQUEST_TYPE_LABELS,
+  REQUEST_TYPES
 } from '../../../../core/constants/printlab.constants';
 import { AuthService, RequestsService } from '../../../../core/services';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
@@ -14,7 +15,12 @@ import {
   isFieldInvalid,
   ValidationMessages
 } from '../../../../core/utils/form-errors.util';
-import { PrintRequest, PrintRequestPayload, RequestStatus } from '../../../../interfaces';
+import {
+  PrintRequest,
+  PrintRequestPayload,
+  RequestStatus,
+  RequestType
+} from '../../../../interfaces';
 
 @Component({
   selector: 'app-client-requests-page',
@@ -31,7 +37,8 @@ export class ClientRequestsPageComponent {
   readonly requests = signal<PrintRequest[]>([]);
   readonly requestStatuses = REQUEST_STATUSES;
   readonly requestStatusLabels = REQUEST_STATUS_LABELS;
-  readonly materialOptions = MATERIAL_OPTIONS;
+  readonly requestTypes = REQUEST_TYPES;
+  readonly requestTypeLabels = REQUEST_TYPE_LABELS;
   readonly isLoading = signal(true);
   readonly isSaving = signal(false);
   readonly editingId = signal<string | null>(null);
@@ -48,13 +55,8 @@ export class ClientRequestsPageComponent {
       minlength: 'La descripcion debe tener al menos 10 caracteres.',
       maxlength: 'La descripcion no debe exceder 500 caracteres.'
     },
-    material: {
-      required: 'Selecciona un material.'
-    },
-    quantity: {
-      required: 'Ingresa la cantidad.',
-      min: 'La cantidad debe ser mayor o igual a 1.',
-      max: 'La cantidad no debe exceder 1000 piezas.'
+    request_type: {
+      required: 'Selecciona el tipo de solicitud.'
     },
     status: {
       required: 'Selecciona el estado.'
@@ -70,13 +72,11 @@ export class ClientRequestsPageComponent {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(10), Validators.maxLength(500)]
     }),
-    material: new FormControl('PLA', { nonNullable: true, validators: [Validators.required] }),
-    quantity: new FormControl(1, {
+    request_type: new FormControl('GENERAL_3D', {
       nonNullable: true,
-      validators: [Validators.required, Validators.min(1), Validators.max(1000)]
+      validators: [Validators.required]
     }),
-    status: new FormControl('PENDING', { nonNullable: true, validators: [Validators.required] }),
-    due_date: new FormControl('', { nonNullable: true })
+    status: new FormControl('PENDING', { nonNullable: true, validators: [Validators.required] })
   });
 
   constructor() {
@@ -110,11 +110,9 @@ export class ClientRequestsPageComponent {
     this.successMessage.set('');
     this.form.patchValue({
       title: request.title,
-      description: request.description,
-      material: request.material,
-      quantity: request.quantity,
-      status: request.status,
-      due_date: request.due_date ? request.due_date.slice(0, 10) : ''
+      description: request.description ?? '',
+      request_type: request.request_type,
+      status: request.status
     });
   }
 
@@ -123,10 +121,8 @@ export class ClientRequestsPageComponent {
     this.form.reset({
       title: '',
       description: '',
-      material: 'PLA',
-      quantity: 1,
-      status: 'PENDING',
-      due_date: ''
+      request_type: 'GENERAL_3D',
+      status: 'PENDING'
     });
   }
 
@@ -150,12 +146,10 @@ export class ClientRequestsPageComponent {
     const rawValue = this.form.getRawValue();
     const payload: PrintRequestPayload = {
       title: rawValue.title,
-      description: rawValue.description,
-      material: rawValue.material,
-      quantity: rawValue.quantity,
+      description: rawValue.description || null,
+      request_type: rawValue.request_type as RequestType,
       status: rawValue.status as RequestStatus,
-      client_id: user.id,
-      due_date: rawValue.due_date || null
+      client_id: user.id
     };
 
     try {
@@ -177,7 +171,7 @@ export class ClientRequestsPageComponent {
   }
 
   async deleteRequest(request: PrintRequest): Promise<void> {
-    if (!window.confirm(`¿Deseas eliminar la solicitud "${request.title}"?`)) {
+    if (!window.confirm(`Deseas eliminar la solicitud "${request.title}"?`)) {
       return;
     }
 
@@ -198,12 +192,12 @@ export class ClientRequestsPageComponent {
     }
   }
 
-  statusClass(status: string): string {
-    if (status === 'REJECTED') {
+  statusClass(status: RequestStatus): string {
+    if (status === 'CANCELED') {
       return 'danger';
     }
 
-    if (['IN_REVIEW', 'PENDING'].includes(status)) {
+    if (['PENDING', 'IN_REVIEW'].includes(status)) {
       return 'warn';
     }
 

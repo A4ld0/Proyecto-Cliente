@@ -1,29 +1,27 @@
 export type RequestStatus =
   | 'PENDING'
   | 'IN_REVIEW'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'IN_PROGRESS'
-  | 'DONE';
+  | 'QUOTED'
+  | 'CANCELED'
+  | 'CLOSED';
+
+export type RequestType = 'CUTTER' | 'GENERAL_3D';
 
 export interface PrintRequest {
   id: string;
-  title: string;
-  description: string;
-  material: string;
-  quantity: number;
-  status: RequestStatus;
   client_id: string;
-  due_date?: string | null;
+  title: string;
+  description?: string | null;
+  request_type: RequestType;
+  status: RequestStatus;
   created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface PrintRequestPayload {
   title: string;
-  description: string;
-  material: string;
-  quantity: number;
+  description?: string | null;
+  request_type: RequestType;
   status: RequestStatus;
   client_id: string;
-  due_date?: string | null;
 }

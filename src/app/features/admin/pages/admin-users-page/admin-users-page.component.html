@@ -18,23 +18,21 @@
   <div class="split-layout">
     <section class="panel">
       <div class="page-title">
-        <h2>{{ editingId() ? 'Editar usuario' : 'Nuevo perfil' }}</h2>
-        <p>
-          Usa este formulario para mantener actualizada la informacion de cada persona.
-        </p>
+        <h2>Editar perfil</h2>
+        <p>Los perfiles nacen desde Supabase Auth. Aqui puedes ajustar datos, rol y estado.</p>
       </div>
 
       <form class="form-grid" novalidate [formGroup]="form" (ngSubmit)="submit()">
-        <div class="field" [class.field-invalid]="hasFieldError('name')">
-          <label for="name">Nombre</label>
+        <div class="field" [class.field-invalid]="hasFieldError('full_name')">
+          <label for="full_name">Nombre</label>
           <input
-            id="name"
+            id="full_name"
             type="text"
-            formControlName="name"
-            [attr.aria-invalid]="hasFieldError('name')"
+            formControlName="full_name"
+            [attr.aria-invalid]="hasFieldError('full_name')"
           />
-          @if (hasFieldError('name')) {
-            <p class="field-error">{{ getFieldError('name') }}</p>
+          @if (hasFieldError('full_name')) {
+            <p class="field-error">{{ getFieldError('full_name') }}</p>
           }
         </div>
 
@@ -76,22 +74,21 @@
           }
         </div>
 
-        <div class="field field-full" [class.field-invalid]="hasFieldError('organization')">
-          <label for="organization">Organizacion</label>
-          <input
-            id="organization"
-            type="text"
-            formControlName="organization"
-            [attr.aria-invalid]="hasFieldError('organization')"
-          />
-          @if (hasFieldError('organization')) {
-            <p class="field-error">{{ getFieldError('organization') }}</p>
-          }
+        <div class="field" [class.field-invalid]="hasFieldError('is_active')">
+          <label for="is_active">Estado</label>
+          <select
+            id="is_active"
+            formControlName="is_active"
+            [attr.aria-invalid]="hasFieldError('is_active')"
+          >
+            <option [ngValue]="true">Activo</option>
+            <option [ngValue]="false">Inactivo</option>
+          </select>
         </div>
 
         <div class="actions field-full">
           <button class="button" type="submit" [disabled]="isSaving() || form.invalid">
-            {{ isSaving() ? 'Guardando...' : editingId() ? 'Actualizar' : 'Crear perfil' }}
+            {{ isSaving() ? 'Guardando...' : 'Guardar cambios' }}
           </button>
           <button class="button-ghost" type="button" (click)="resetForm()">Limpiar</button>
         </div>
@@ -101,7 +98,7 @@
     <section class="panel">
       <div class="page-title">
         <h2>Listado general</h2>
-        <p>Consulta, ajusta o depura los perfiles registrados en el sistema.</p>
+        <p>Consulta y ajusta los perfiles registrados en el sistema.</p>
       </div>
 
       @if (isLoading()) {
@@ -115,25 +112,22 @@
                 <th>Correo</th>
                 <th>Rol</th>
                 <th>Telefono</th>
-                <th>Organizacion</th>
-                <th>Acciones</th>
+                <th>Estado</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               @for (user of users(); track user.id) {
                 <tr>
-                  <td>{{ user.name }}</td>
-                  <td>{{ user.email }}</td>
+                  <td>{{ user.full_name }}</td>
+                  <td>{{ user.email || 'Sin correo' }}</td>
                   <td><span class="status-chip">{{ roleLabels[user.role] }}</span></td>
                   <td>{{ user.phone || 'Sin telefono' }}</td>
-                  <td>{{ user.organization || 'Sin organizacion' }}</td>
+                  <td>{{ user.is_active ? 'Activo' : 'Inactivo' }}</td>
                   <td>
                     <div class="actions">
                       <button class="button-secondary" type="button" (click)="editUser(user)">
                         Editar
-                      </button>
-                      <button class="button-danger" type="button" (click)="deleteUser(user)">
-                        Eliminar
                       </button>
                     </div>
                   </td>

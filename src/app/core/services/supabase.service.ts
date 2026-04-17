@@ -116,10 +116,14 @@ export class SupabaseService {
     );
   }
 
-  signUp(email: string, password: string): Observable<unknown> {
-    return this.http.post(`${this.supabaseUrl}/auth/v1/signup`, { email, password }, {
-      headers: this.headers
-    });
+  signUp(email: string, password: string, data?: Record<string, unknown>): Observable<unknown> {
+    return this.http.post(
+      `${this.supabaseUrl}/auth/v1/signup`,
+      data ? { email, password, data } : { email, password },
+      {
+        headers: this.headers
+      }
+    );
   }
 
   signOut(): Observable<unknown> {

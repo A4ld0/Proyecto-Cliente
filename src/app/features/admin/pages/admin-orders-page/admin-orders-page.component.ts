@@ -2,15 +2,19 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
-import { ORDER_STATUSES, ORDER_STATUS_LABELS } from '../../../../core/constants/printlab.constants';
-import { OrdersService, RequestsService, UsersService } from '../../../../core/services';
+import {
+  ORDER_STATUSES,
+  ORDER_STATUS_LABELS,
+  QUOTE_STATUS_LABELS
+} from '../../../../core/constants/printlab.constants';
+import { OrdersService, QuotesService, RequestsService, UsersService } from '../../../../core/services';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import {
   getFieldErrorMessage,
   isFieldInvalid,
   ValidationMessages
 } from '../../../../core/utils/form-errors.util';
-import { Order, OrderPayload, OrderStatus, PrintRequest, User } from '../../../../interfaces';
+import { Order, OrderPayload, OrderStatus, Quote, PrintRequest, User } from '../../../../interfaces';
 
 @Component({
   selector: 'app-admin-orders-page',
@@ -21,60 +25,44 @@ import { Order, OrderPayload, OrderStatus, PrintRequest, User } from '../../../.
 })
 export class AdminOrdersPageComponent {
   private readonly ordersService = inject(OrdersService);
+  private readonly quotesService = inject(QuotesService);
   private readonly requestsService = inject(RequestsService);
   private readonly usersService = inject(UsersService);
 
   readonly orders = signal<Order[]>([]);
+  readonly quotes = signal<Quote[]>([]);
   readonly requests = signal<PrintRequest[]>([]);
   readonly users = signal<User[]>([]);
-  readonly clientOptions = computed(() => this.users().filter((user) => user.role === 'CLIENT'));
   readonly orderStatuses = ORDER_STATUSES;
   readonly orderStatusLabels = ORDER_STATUS_LABELS;
+  readonly quoteStatusLabels = QUOTE_STATUS_LABELS;
   readonly isLoading = signal(true);
   readonly isSaving = signal(false);
   readonly editingId = signal<string | null>(null);
   readonly errorMessage = signal('');
   readonly successMessage = signal('');
+  readonly availableQuotes = computed(() =>
+    this.quotes().filter((quote) => {
+      const assignedOrder = this.orders().find((order) => order.quote_id === quote.id);
+      return !assignedOrder || assignedOrder.id === this.editingId();
+    })
+  );
   readonly validationMessages: Record<string, ValidationMessages> = {
-    request_id: {
-      required: 'Selecciona una solicitud.'
+    quote_id: {
+      required: 'Selecciona una cotizacion.'
     },
     client_id: {
       required: 'Selecciona un cliente.'
     },
     status: {
       required: 'Selecciona el estado.'
-    },
-    quantity: {
-      required: 'Ingresa la cantidad.',
-      min: 'La cantidad debe ser mayor o igual a 1.',
-      max: 'La cantidad no debe exceder 1000 piezas.'
-    },
-    total: {
-      required: 'Ingresa el total.',
-      min: 'El total no puede ser negativo.'
-    },
-    notes: {
-      maxlength: 'Las notas no deben exceder 250 caracteres.'
     }
   };
 
   readonly form = new FormGroup({
-    request_id: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    quote_id: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     client_id: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    status: new FormControl('CREATED', { nonNullable: true, validators: [Validators.required] }),
-    quantity: new FormControl(1, {
-      nonNullable: true,
-      validators: [Validators.required, Validators.min(1), Validators.max(1000)]
-    }),
-    total: new FormControl(0, {
-      nonNullable: true,
-      validators: [Validators.required, Validators.min(0)]
-    }),
-    notes: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(250)]
-    })
+    status: new FormControl('QUEUE', { nonNullable: true, validators: [Validators.required] })
   });
 
   constructor() {
@@ -86,19 +74,21 @@ export class AdminOrdersPageComponent {
     this.errorMessage.set('');
 
     try {
-      const [orders, requests, users] = await Promise.all([
+      const [orders, quotes, requests, users] = await Promise.all([
         firstValueFrom(this.ordersService.list()),
+        firstValueFrom(this.quotesService.list()),
         firstValueFrom(this.requestsService.list()),
         firstValueFrom(this.usersService.list())
       ]);
 
       this.orders.set(orders);
+      this.quotes.set(quotes);
       this.requests.set(requests);
       this.users.set(users);
 
-      if (!this.form.controls.request_id.value && this.requests().length) {
-        this.form.controls.request_id.setValue(this.requests()[0].id);
-        this.syncClientFromRequest(this.requests()[0].id);
+      if (!this.form.controls.quote_id.value && this.availableQuotes().length) {
+        this.form.controls.quote_id.setValue(this.availableQuotes()[0].id);
+        this.syncClientFromQuote(this.availableQuotes()[0].id);
       }
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'No pudimos cargar los pedidos.'));
@@ -107,19 +97,29 @@ export class AdminOrdersPageComponent {
     }
   }
 
-  requestTitle(requestId: string): string {
-    return this.requests().find((request) => request.id === requestId)?.title ?? requestId;
+  quoteById(quoteId: string): Quote | undefined {
+    return this.quotes().find((quote) => quote.id === quoteId);
+  }
+
+  requestTitleFromQuote(quoteId: string): string {
+    const requestId = this.quoteById(quoteId)?.request_id;
+    return this.requests().find((request) => request.id === requestId)?.title ?? quoteId;
   }
 
   clientName(clientId: string): string {
-    return this.users().find((user) => user.id === clientId)?.name ?? clientId;
+    return this.users().find((user) => user.id === clientId)?.full_name ?? clientId;
   }
 
-  syncClientFromRequest(requestId: string): void {
-    const request = this.requests().find((item) => item.id === requestId);
+  quoteTotal(quoteId: string): number {
+    return Number(this.quoteById(quoteId)?.price_total ?? 0);
+  }
 
-    if (request) {
-      this.form.controls.client_id.setValue(request.client_id);
+  syncClientFromQuote(quoteId: string): void {
+    const requestId = this.quoteById(quoteId)?.request_id;
+    const clientId = this.requests().find((request) => request.id === requestId)?.client_id;
+
+    if (clientId) {
+      this.form.controls.client_id.setValue(clientId);
     }
   }
 
@@ -127,25 +127,23 @@ export class AdminOrdersPageComponent {
     this.editingId.set(order.id);
     this.successMessage.set('');
     this.form.patchValue({
-      request_id: order.request_id,
+      quote_id: order.quote_id,
       client_id: order.client_id,
-      status: order.status,
-      quantity: order.quantity,
-      total: Number(order.total),
-      notes: order.notes ?? ''
+      status: order.status
     });
   }
 
   resetForm(): void {
     this.editingId.set(null);
     this.form.reset({
-      request_id: this.requests()[0]?.id ?? '',
-      client_id: this.requests()[0]?.client_id ?? '',
-      status: 'CREATED',
-      quantity: 1,
-      total: 0,
-      notes: ''
+      quote_id: this.availableQuotes()[0]?.id ?? '',
+      client_id: '',
+      status: 'QUEUE'
     });
+
+    if (this.availableQuotes().length) {
+      this.syncClientFromQuote(this.availableQuotes()[0].id);
+    }
   }
 
   async submit(): Promise<void> {
@@ -160,12 +158,9 @@ export class AdminOrdersPageComponent {
 
     const rawValue = this.form.getRawValue();
     const payload: OrderPayload = {
-      request_id: rawValue.request_id,
+      quote_id: rawValue.quote_id,
       client_id: rawValue.client_id,
-      status: rawValue.status as OrderStatus,
-      quantity: rawValue.quantity,
-      total: Number(rawValue.total),
-      notes: rawValue.notes || null
+      status: rawValue.status as OrderStatus
     };
 
     try {
@@ -187,7 +182,7 @@ export class AdminOrdersPageComponent {
   }
 
   async deleteOrder(order: Order): Promise<void> {
-    if (!window.confirm(`¿Deseas eliminar el pedido "${order.id}"?`)) {
+    if (!window.confirm(`Deseas eliminar el pedido "${order.id}"?`)) {
       return;
     }
 
@@ -206,11 +201,11 @@ export class AdminOrdersPageComponent {
   }
 
   statusClass(status: string): string {
-    if (status === 'CANCELLED') {
+    if (status === 'CANCELED') {
       return 'danger';
     }
 
-    if (['CREATED', 'PRINTING'].includes(status)) {
+    if (['QUEUE', 'PRINTING', 'POSTPROCESS'].includes(status)) {
       return 'warn';
     }
 

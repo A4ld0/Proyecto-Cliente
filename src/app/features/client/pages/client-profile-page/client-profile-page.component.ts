@@ -23,7 +23,7 @@ export class ClientProfilePageComponent {
   readonly errorMessage = signal('');
   readonly successMessage = signal('');
   readonly validationMessages: Record<string, ValidationMessages> = {
-    name: {
+    full_name: {
       required: 'Ingresa tu nombre.',
       minlength: 'El nombre debe tener al menos 3 caracteres.',
       maxlength: 'El nombre no debe exceder 80 caracteres.'
@@ -31,14 +31,11 @@ export class ClientProfilePageComponent {
     phone: {
       pattern: 'Escribe un telefono valido.',
       maxlength: 'El telefono no debe exceder 20 caracteres.'
-    },
-    organization: {
-      maxlength: 'La organizacion no debe exceder 80 caracteres.'
     }
   };
 
   readonly form = new FormGroup({
-    name: new FormControl('', {
+    full_name: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(3), Validators.maxLength(80)]
     }),
@@ -47,10 +44,7 @@ export class ClientProfilePageComponent {
       nonNullable: true,
       validators: [Validators.pattern(/^[0-9+\s()-]{7,20}$/), Validators.maxLength(20)]
     }),
-    organization: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(80)]
-    }),
+    is_active: new FormControl({ value: true, disabled: true }, { nonNullable: true }),
     role: new FormControl({ value: '', disabled: true }, { nonNullable: true })
   });
 
@@ -60,10 +54,10 @@ export class ClientProfilePageComponent {
 
       if (user) {
         this.form.patchValue({
-          name: user.name,
-          email: user.email,
+          full_name: user.full_name,
+          email: user.email ?? '',
           phone: user.phone ?? '',
-          organization: user.organization ?? '',
+          is_active: user.is_active,
           role: user.role
         });
       }
@@ -82,9 +76,8 @@ export class ClientProfilePageComponent {
 
     try {
       await this.authService.updateCurrentUser({
-        name: this.form.controls.name.getRawValue(),
-        phone: this.form.controls.phone.getRawValue(),
-        organization: this.form.controls.organization.getRawValue()
+        full_name: this.form.controls.full_name.getRawValue(),
+        phone: this.form.controls.phone.getRawValue()
       });
 
       this.successMessage.set('Tus datos se actualizaron correctamente.');

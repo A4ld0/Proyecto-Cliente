@@ -3,7 +3,7 @@
     <div class="page-title">
       <span class="eyebrow">Cliente</span>
       <h1>Solicitudes</h1>
-      <p>Registra lo que necesitas imprimir y manten la informacion siempre actualizada.</p>
+      <p>Registra lo que necesitas y manten la informacion alineada al flujo real del sistema.</p>
     </div>
   </div>
 
@@ -19,7 +19,7 @@
     <section class="panel">
       <div class="page-title">
         <h2>{{ editingId() ? 'Editar solicitud' : 'Nueva solicitud' }}</h2>
-        <p>Completa los datos principales para facilitar la revision de tu pedido.</p>
+        <p>Completa los datos principales para facilitar la revision y posterior cotizacion.</p>
       </div>
 
       <form class="form-grid" novalidate [formGroup]="form" (ngSubmit)="submit()">
@@ -42,7 +42,7 @@
           <textarea
             id="description"
             formControlName="description"
-            placeholder="Detalles tecnicos, escala, color y acabado."
+            placeholder="Detalles tecnicos, dimensiones, color o acabado deseado."
             [attr.aria-invalid]="hasFieldError('description')"
           ></textarea>
           @if (hasFieldError('description')) {
@@ -50,33 +50,19 @@
           }
         </div>
 
-        <div class="field" [class.field-invalid]="hasFieldError('material')">
-          <label for="material">Material</label>
+        <div class="field" [class.field-invalid]="hasFieldError('request_type')">
+          <label for="request_type">Tipo</label>
           <select
-            id="material"
-            formControlName="material"
-            [attr.aria-invalid]="hasFieldError('material')"
+            id="request_type"
+            formControlName="request_type"
+            [attr.aria-invalid]="hasFieldError('request_type')"
           >
-            @for (material of materialOptions; track material) {
-              <option [value]="material">{{ material }}</option>
+            @for (requestType of requestTypes; track requestType) {
+              <option [value]="requestType">{{ requestTypeLabels[requestType] }}</option>
             }
           </select>
-          @if (hasFieldError('material')) {
-            <p class="field-error">{{ getFieldError('material') }}</p>
-          }
-        </div>
-
-        <div class="field" [class.field-invalid]="hasFieldError('quantity')">
-          <label for="quantity">Cantidad</label>
-          <input
-            id="quantity"
-            type="number"
-            min="1"
-            formControlName="quantity"
-            [attr.aria-invalid]="hasFieldError('quantity')"
-          />
-          @if (hasFieldError('quantity')) {
-            <p class="field-error">{{ getFieldError('quantity') }}</p>
+          @if (hasFieldError('request_type')) {
+            <p class="field-error">{{ getFieldError('request_type') }}</p>
           }
         </div>
 
@@ -92,11 +78,6 @@
           }
         </div>
 
-        <div class="field">
-          <label for="due_date">Fecha compromiso</label>
-          <input id="due_date" type="date" formControlName="due_date" />
-        </div>
-
         <div class="actions field-full">
           <button class="button" type="submit" [disabled]="isSaving() || form.invalid">
             {{ isSaving() ? 'Guardando...' : editingId() ? 'Actualizar' : 'Crear solicitud' }}
@@ -110,7 +91,7 @@
     <section class="panel">
       <div class="page-title">
         <h2>Tus registros</h2>
-        <p>Consulta tus solicitudes y actualiza la informacion cuando sea necesario.</p>
+        <p>Consulta tus solicitudes y manten su informacion actualizada.</p>
       </div>
 
       @if (isLoading()) {
@@ -121,10 +102,9 @@
             <thead>
               <tr>
                 <th>Titulo</th>
-                <th>Material</th>
-                <th>Cantidad</th>
+                <th>Tipo</th>
                 <th>Estado</th>
-                <th>Entrega</th>
+                <th>Creada</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -133,10 +113,9 @@
                 <tr>
                   <td>
                     <strong>{{ request.title }}</strong>
-                    <p class="muted">{{ request.description }}</p>
+                    <p class="muted">{{ request.description || 'Sin descripcion' }}</p>
                   </td>
-                  <td>{{ request.material }}</td>
-                  <td>{{ request.quantity }}</td>
+                  <td>{{ requestTypeLabels[request.request_type] }}</td>
                   <td>
                     <span
                       class="status-chip"
@@ -146,7 +125,7 @@
                       {{ requestStatusLabels[request.status] }}
                     </span>
                   </td>
-                  <td>{{ request.due_date ? (request.due_date | date: 'mediumDate') : 'Sin fecha' }}</td>
+                  <td>{{ request.created_at ? (request.created_at | date: 'medium') : 'Sin fecha' }}</td>
                   <td>
                     <div class="actions">
                       <button class="button-secondary" type="button" (click)="editRequest(request)">

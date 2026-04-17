@@ -3,7 +3,7 @@
     <div class="page-title">
       <span class="eyebrow">Admin</span>
       <h1>Pedidos</h1>
-      <p>Gestiona pedidos, importes y estado de entrega desde un solo lugar.</p>
+      <p>Gestiona el avance de pedidos a partir de las cotizaciones disponibles.</p>
     </div>
   </div>
 
@@ -19,41 +19,38 @@
     <section class="panel">
       <div class="page-title">
         <h2>{{ editingId() ? 'Editar pedido' : 'Nuevo pedido' }}</h2>
-        <p>Relaciona cada pedido con su solicitud para mantener el seguimiento claro.</p>
+        <p>Relaciona cada pedido con una cotizacion valida para mantener el seguimiento claro.</p>
       </div>
 
       <form class="form-grid" novalidate [formGroup]="form" (ngSubmit)="submit()">
-        <div class="field field-full" [class.field-invalid]="hasFieldError('request_id')">
-          <label for="request_id">Solicitud</label>
+        <div class="field field-full" [class.field-invalid]="hasFieldError('quote_id')">
+          <label for="quote_id">Cotizacion</label>
           <select
-            id="request_id"
-            formControlName="request_id"
-            (change)="syncClientFromRequest(form.controls.request_id.getRawValue())"
-            [attr.aria-invalid]="hasFieldError('request_id')"
+            id="quote_id"
+            formControlName="quote_id"
+            (change)="syncClientFromQuote(form.controls.quote_id.getRawValue())"
+            [attr.aria-invalid]="hasFieldError('quote_id')"
           >
-            @for (request of requests(); track request.id) {
-              <option [value]="request.id">{{ request.title }}</option>
+            @for (quote of availableQuotes(); track quote.id) {
+              <option [value]="quote.id">
+                {{ requestTitleFromQuote(quote.id) }} | {{ quoteStatusLabels[quote.status] }} |
+                {{ quote.price_total | currency: 'MXN' }}
+              </option>
             }
           </select>
-          @if (hasFieldError('request_id')) {
-            <p class="field-error">{{ getFieldError('request_id') }}</p>
+          @if (hasFieldError('quote_id')) {
+            <p class="field-error">{{ getFieldError('quote_id') }}</p>
           }
         </div>
 
         <div class="field field-full" [class.field-invalid]="hasFieldError('client_id')">
           <label for="client_id">Cliente</label>
-          <select
+          <input
             id="client_id"
-            formControlName="client_id"
-            [attr.aria-invalid]="hasFieldError('client_id')"
-          >
-            @for (client of clientOptions(); track client.id) {
-              <option [value]="client.id">{{ client.name }} | {{ client.email }}</option>
-            }
-          </select>
-          @if (hasFieldError('client_id')) {
-            <p class="field-error">{{ getFieldError('client_id') }}</p>
-          }
+            type="text"
+            [value]="clientName(form.controls.client_id.getRawValue())"
+            readonly
+          />
         </div>
 
         <div class="field" [class.field-invalid]="hasFieldError('status')">
@@ -68,45 +65,13 @@
           }
         </div>
 
-        <div class="field" [class.field-invalid]="hasFieldError('quantity')">
-          <label for="quantity">Cantidad</label>
+        <div class="field">
+          <label>Total cotizado</label>
           <input
-            id="quantity"
-            type="number"
-            min="1"
-            formControlName="quantity"
-            [attr.aria-invalid]="hasFieldError('quantity')"
+            type="text"
+            [value]="quoteTotal(form.controls.quote_id.getRawValue()) | currency: 'MXN'"
+            readonly
           />
-          @if (hasFieldError('quantity')) {
-            <p class="field-error">{{ getFieldError('quantity') }}</p>
-          }
-        </div>
-
-        <div class="field" [class.field-invalid]="hasFieldError('total')">
-          <label for="total">Total</label>
-          <input
-            id="total"
-            type="number"
-            min="0"
-            step="0.01"
-            formControlName="total"
-            [attr.aria-invalid]="hasFieldError('total')"
-          />
-          @if (hasFieldError('total')) {
-            <p class="field-error">{{ getFieldError('total') }}</p>
-          }
-        </div>
-
-        <div class="field field-full" [class.field-invalid]="hasFieldError('notes')">
-          <label for="notes">Notas</label>
-          <textarea
-            id="notes"
-            formControlName="notes"
-            [attr.aria-invalid]="hasFieldError('notes')"
-          ></textarea>
-          @if (hasFieldError('notes')) {
-            <p class="field-error">{{ getFieldError('notes') }}</p>
-          }
         </div>
 
         <div class="actions field-full">
@@ -121,7 +86,7 @@
     <section class="panel">
       <div class="page-title">
         <h2>Listado general</h2>
-        <p>Consulta los pedidos registrados y ajusta su avance cuando sea necesario.</p>
+        <p>Consulta los pedidos registrados y su cotizacion asociada.</p>
       </div>
 
       @if (isLoading()) {
@@ -133,17 +98,16 @@
               <tr>
                 <th>Solicitud</th>
                 <th>Cliente</th>
-                <th>Estado</th>
-                <th>Cantidad</th>
+                <th>Estado pedido</th>
+                <th>Estado cotizacion</th>
                 <th>Total</th>
-                <th>Notas</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               @for (order of orders(); track order.id) {
                 <tr>
-                  <td>{{ requestTitle(order.request_id) }}</td>
+                  <td>{{ requestTitleFromQuote(order.quote_id) }}</td>
                   <td>{{ clientName(order.client_id) }}</td>
                   <td>
                     <span
@@ -154,9 +118,8 @@
                       {{ orderStatusLabels[order.status] }}
                     </span>
                   </td>
-                  <td>{{ order.quantity }}</td>
-                  <td>{{ order.total | currency: 'MXN' }}</td>
-                  <td>{{ order.notes || 'Sin notas' }}</td>
+                  <td>{{ quoteStatusLabels[quoteById(order.quote_id)?.status ?? 'DRAFT'] }}</td>
+                  <td>{{ quoteTotal(order.quote_id) | currency: 'MXN' }}</td>
                   <td>
                     <div class="actions">
                       <button class="button-secondary" type="button" (click)="editOrder(order)">

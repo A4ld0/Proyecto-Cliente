@@ -17,17 +17,17 @@
     }
 
     <form class="form-grid" novalidate [formGroup]="form" (ngSubmit)="submit()">
-      <div class="field" [class.field-invalid]="hasFieldError('name')">
-        <label for="name">Nombre</label>
+      <div class="field" [class.field-invalid]="hasFieldError('full_name')">
+        <label for="full_name">Nombre</label>
         <input
-          id="name"
+          id="full_name"
           type="text"
-          formControlName="name"
+          formControlName="full_name"
           placeholder="Ana Rivera"
-          [attr.aria-invalid]="hasFieldError('name')"
+          [attr.aria-invalid]="hasFieldError('full_name')"
         />
-        @if (hasFieldError('name')) {
-          <p class="field-error">{{ getFieldError('name') }}</p>
+        @if (hasFieldError('full_name')) {
+          <p class="field-error">{{ getFieldError('full_name') }}</p>
         }
       </div>
 
@@ -56,20 +56,6 @@
         />
         @if (hasFieldError('phone')) {
           <p class="field-error">{{ getFieldError('phone') }}</p>
-        }
-      </div>
-
-      <div class="field" [class.field-invalid]="hasFieldError('organization')">
-        <label for="organization">Organizacion</label>
-        <input
-          id="organization"
-          type="text"
-          formControlName="organization"
-          placeholder="Arquitectura MX"
-          [attr.aria-invalid]="hasFieldError('organization')"
-        />
-        @if (hasFieldError('organization')) {
-          <p class="field-error">{{ getFieldError('organization') }}</p>
         }
       </div>
 

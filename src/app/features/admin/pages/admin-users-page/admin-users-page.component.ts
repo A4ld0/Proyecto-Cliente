@@ -33,7 +33,7 @@ export class AdminUsersPageComponent {
   readonly errorMessage = signal('');
   readonly successMessage = signal('');
   readonly validationMessages: Record<string, ValidationMessages> = {
-    name: {
+    full_name: {
       required: 'Ingresa el nombre.',
       minlength: 'El nombre debe tener al menos 3 caracteres.',
       maxlength: 'El nombre no debe exceder 80 caracteres.'
@@ -49,13 +49,13 @@ export class AdminUsersPageComponent {
       pattern: 'Escribe un telefono valido.',
       maxlength: 'El telefono no debe exceder 20 caracteres.'
     },
-    organization: {
-      maxlength: 'La organizacion no debe exceder 80 caracteres.'
+    is_active: {
+      required: 'Selecciona el estado.'
     }
   };
 
   readonly form = new FormGroup({
-    name: new FormControl('', {
+    full_name: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(3), Validators.maxLength(80)]
     }),
@@ -68,10 +68,7 @@ export class AdminUsersPageComponent {
       nonNullable: true,
       validators: [Validators.pattern(/^[0-9+\s()-]{7,20}$/), Validators.maxLength(20)]
     }),
-    organization: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(80)]
-    })
+    is_active: new FormControl(true, { nonNullable: true, validators: [Validators.required] })
   });
 
   constructor() {
@@ -85,6 +82,11 @@ export class AdminUsersPageComponent {
     try {
       const users = await firstValueFrom(this.usersService.list());
       this.users.set(users);
+
+      if (users.length) {
+        const selected = users.find((user) => user.id === this.editingId()) ?? users[0];
+        this.editUser(selected);
+      }
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'No pudimos cargar los usuarios.'));
     } finally {
@@ -96,28 +98,32 @@ export class AdminUsersPageComponent {
     this.editingId.set(user.id);
     this.successMessage.set('');
     this.form.patchValue({
-      name: user.name,
-      email: user.email,
+      full_name: user.full_name,
+      email: user.email ?? '',
       role: user.role,
       phone: user.phone ?? '',
-      organization: user.organization ?? ''
+      is_active: user.is_active
     });
   }
 
   resetForm(): void {
-    this.editingId.set(null);
-    this.form.reset({
-      name: '',
-      email: '',
-      role: 'CLIENT',
-      phone: '',
-      organization: ''
-    });
+    const current = this.users().find((user) => user.id === this.editingId()) ?? this.users()[0];
+
+    if (current) {
+      this.editUser(current);
+    }
   }
 
   async submit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      return;
+    }
+
+    if (!this.editingId()) {
+      this.errorMessage.set(
+        'Los perfiles se crean desde Supabase Auth. Aqui solo puedes editar perfiles existentes.'
+      );
       return;
     }
 
@@ -127,54 +133,26 @@ export class AdminUsersPageComponent {
 
     const rawValue = this.form.getRawValue();
     const payload: UserPayload = {
-      ...rawValue,
-      role: rawValue.role as UserRole
+      full_name: rawValue.full_name,
+      email: rawValue.email,
+      role: rawValue.role as UserRole,
+      phone: rawValue.phone || null,
+      is_active: rawValue.is_active
     };
 
     try {
-      if (this.editingId()) {
-        if (this.currentUser()?.id === this.editingId()) {
-          await this.authService.updateCurrentUser(payload);
-        } else {
-          await firstValueFrom(this.usersService.update(this.editingId()!, payload));
-        }
-
-        this.successMessage.set('El perfil se actualizo correctamente.');
+      if (this.currentUser()?.id === this.editingId()) {
+        await this.authService.updateCurrentUser(payload);
       } else {
-        await firstValueFrom(this.usersService.create(payload));
-        this.successMessage.set('El perfil se creo correctamente.');
+        await firstValueFrom(this.usersService.update(this.editingId()!, payload));
       }
 
-      this.resetForm();
+      this.successMessage.set('El perfil se actualizo correctamente.');
       await this.loadUsers();
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'No pudimos guardar el perfil.'));
     } finally {
       this.isSaving.set(false);
-    }
-  }
-
-  async deleteUser(user: User): Promise<void> {
-    if (this.currentUser()?.id === user.id) {
-      this.errorMessage.set('No puedes eliminar tu propio perfil desde esta vista.');
-      return;
-    }
-
-    if (!window.confirm(`¿Deseas eliminar el perfil de "${user.name}"?`)) {
-      return;
-    }
-
-    try {
-      await firstValueFrom(this.usersService.delete(user.id));
-      this.successMessage.set('El perfil se elimino correctamente.');
-
-      if (this.editingId() === user.id) {
-        this.resetForm();
-      }
-
-      await this.loadUsers();
-    } catch (error) {
-      this.errorMessage.set(getApiErrorMessage(error, 'No pudimos eliminar el perfil.'));
     }
   }
 

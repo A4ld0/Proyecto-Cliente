@@ -24,7 +24,7 @@ export class RegisterPageComponent {
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal('');
   readonly validationMessages: Record<string, ValidationMessages> = {
-    name: {
+    full_name: {
       required: 'Ingresa el nombre del cliente.',
       minlength: 'El nombre debe tener al menos 3 caracteres.',
       maxlength: 'El nombre no debe exceder 80 caracteres.'
@@ -41,14 +41,11 @@ export class RegisterPageComponent {
     phone: {
       pattern: 'Escribe un telefono valido.',
       maxlength: 'El telefono no debe exceder 20 caracteres.'
-    },
-    organization: {
-      maxlength: 'La organizacion no debe exceder 80 caracteres.'
     }
   };
 
   readonly form = new FormGroup({
-    name: new FormControl('', {
+    full_name: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(3), Validators.maxLength(80)]
     }),
@@ -67,10 +64,6 @@ export class RegisterPageComponent {
     phone: new FormControl('', {
       nonNullable: true,
       validators: [Validators.pattern(/^[0-9+\s()-]{7,20}$/), Validators.maxLength(20)]
-    }),
-    organization: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(80)]
     })
   });
 

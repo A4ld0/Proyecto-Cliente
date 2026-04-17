@@ -2,18 +2,19 @@ export type UserRole = 'ADMIN' | 'CLIENT';
 
 export interface User {
   id: string;
-  name: string;
-  email: string;
+  full_name: string;
+  email?: string | null;
   role: UserRole;
   phone?: string | null;
-  organization?: string | null;
+  is_active: boolean;
   created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface UserPayload {
-  name: string;
-  email: string;
-  role: UserRole;
+  full_name: string;
+  email?: string | null;
   phone?: string | null;
-  organization?: string | null;
+  role: UserRole;
+  is_active?: boolean;
 }

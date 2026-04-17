@@ -53,7 +53,7 @@
             <div class="notice">
               <strong>{{ request.title }}</strong>
               <p>
-                {{ request.material }} | {{ request.quantity }} piezas |
+                {{ requestTypeLabels[request.request_type] }} |
                 {{ requestStatusLabels[request.status] }}
               </p>
             </div>
@@ -77,7 +77,7 @@
           @for (order of orders().slice(0, 4); track order.id) {
             <div class="notice">
               <strong>{{ orderStatusLabels[order.status] }}</strong>
-              <p>{{ order.quantity }} piezas | {{ order.total | currency: 'MXN' }}</p>
+              <p>{{ quoteTotal(order.quote_id) | currency: 'MXN' }}</p>
             </div>
           }
         </div>

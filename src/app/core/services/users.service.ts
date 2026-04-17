@@ -6,7 +6,7 @@ import { SupabaseService } from './supabase.service';
 @Injectable({ providedIn: 'root' })
 export class UsersService {
   private readonly supabase = inject(SupabaseService);
-  private readonly table = 'users';
+  private readonly table = 'profiles';
 
   list() {
     return this.supabase.select<User>(this.table, {
@@ -26,10 +26,6 @@ export class UsersService {
       .pipe(map((users) => users[0] ?? null));
   }
 
-  create(payload: UserPayload & { id?: string }) {
-    return this.supabase.insert<User>(this.table, payload);
-  }
-
   upsert(payload: UserPayload & { id: string }) {
     return this.supabase.insert<User>(this.table, payload, {
       upsert: true,
@@ -39,9 +35,5 @@ export class UsersService {
 
   update(id: string, payload: Partial<UserPayload>) {
     return this.supabase.update<User>(this.table, payload, [{ column: 'id', value: id }]);
-  }
-
-  delete(id: string) {
-    return this.supabase.delete<User>(this.table, [{ column: 'id', value: id }]);
   }
 }

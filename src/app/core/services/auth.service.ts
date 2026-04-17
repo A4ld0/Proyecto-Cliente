@@ -55,7 +55,9 @@ export class AuthService {
 
   async register(payload: RegisterPayload): Promise<User> {
     const response = (await firstValueFrom(
-      this.supabase.signUp(payload.email, payload.password)
+      this.supabase.signUp(payload.email ?? '', payload.password, {
+        name: payload.full_name
+      })
     )) as SupabaseAuthResponse;
 
     const userId = response.user?.id;
@@ -64,16 +66,22 @@ export class AuthService {
       throw new Error('No fue posible completar el registro.');
     }
 
-    const [profile] = await firstValueFrom(
-      this.usersService.upsert({
-        id: userId,
-        name: payload.name,
-        email: payload.email,
-        role: payload.role,
-        phone: payload.phone,
-        organization: payload.organization
-      })
-    );
+    let profile =
+      (await firstValueFrom(this.usersService.getById(userId))) ??
+      (await firstValueFrom(this.usersService.getByEmail(payload.email ?? '')));
+
+    if (response.access_token) {
+      this.supabase.setAccessToken(response.access_token);
+      const [updatedProfile] = await firstValueFrom(
+        this.usersService.update(userId, {
+          full_name: payload.full_name,
+          phone: payload.phone,
+          role: payload.role,
+          is_active: payload.is_active ?? true
+        })
+      );
+      profile = updatedProfile ?? profile;
+    }
 
     if (!profile) {
       throw new Error('No fue posible crear el perfil de usuario.');
