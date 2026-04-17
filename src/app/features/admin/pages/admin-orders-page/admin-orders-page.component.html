@@ -1,2 +1,180 @@
-<h2>Pedidos Admin</h2>
-<p>Aqui ira la vista de pedidos para el administrador.</p>
+<section class="page-shell">
+  <div class="page-header">
+    <div class="page-title">
+      <span class="eyebrow">Admin</span>
+      <h1>Pedidos</h1>
+      <p>Gestiona pedidos, importes y estado de entrega desde un solo lugar.</p>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (successMessage()) {
+    <div class="notice">{{ successMessage() }}</div>
+  }
+
+  <div class="split-layout">
+    <section class="panel">
+      <div class="page-title">
+        <h2>{{ editingId() ? 'Editar pedido' : 'Nuevo pedido' }}</h2>
+        <p>Relaciona cada pedido con su solicitud para mantener el seguimiento claro.</p>
+      </div>
+
+      <form class="form-grid" novalidate [formGroup]="form" (ngSubmit)="submit()">
+        <div class="field field-full" [class.field-invalid]="hasFieldError('request_id')">
+          <label for="request_id">Solicitud</label>
+          <select
+            id="request_id"
+            formControlName="request_id"
+            (change)="syncClientFromRequest(form.controls.request_id.getRawValue())"
+            [attr.aria-invalid]="hasFieldError('request_id')"
+          >
+            @for (request of requests(); track request.id) {
+              <option [value]="request.id">{{ request.title }}</option>
+            }
+          </select>
+          @if (hasFieldError('request_id')) {
+            <p class="field-error">{{ getFieldError('request_id') }}</p>
+          }
+        </div>
+
+        <div class="field field-full" [class.field-invalid]="hasFieldError('client_id')">
+          <label for="client_id">Cliente</label>
+          <select
+            id="client_id"
+            formControlName="client_id"
+            [attr.aria-invalid]="hasFieldError('client_id')"
+          >
+            @for (client of clientOptions(); track client.id) {
+              <option [value]="client.id">{{ client.name }} | {{ client.email }}</option>
+            }
+          </select>
+          @if (hasFieldError('client_id')) {
+            <p class="field-error">{{ getFieldError('client_id') }}</p>
+          }
+        </div>
+
+        <div class="field" [class.field-invalid]="hasFieldError('status')">
+          <label for="status">Estado</label>
+          <select id="status" formControlName="status" [attr.aria-invalid]="hasFieldError('status')">
+            @for (status of orderStatuses; track status) {
+              <option [value]="status">{{ orderStatusLabels[status] }}</option>
+            }
+          </select>
+          @if (hasFieldError('status')) {
+            <p class="field-error">{{ getFieldError('status') }}</p>
+          }
+        </div>
+
+        <div class="field" [class.field-invalid]="hasFieldError('quantity')">
+          <label for="quantity">Cantidad</label>
+          <input
+            id="quantity"
+            type="number"
+            min="1"
+            formControlName="quantity"
+            [attr.aria-invalid]="hasFieldError('quantity')"
+          />
+          @if (hasFieldError('quantity')) {
+            <p class="field-error">{{ getFieldError('quantity') }}</p>
+          }
+        </div>
+
+        <div class="field" [class.field-invalid]="hasFieldError('total')">
+          <label for="total">Total</label>
+          <input
+            id="total"
+            type="number"
+            min="0"
+            step="0.01"
+            formControlName="total"
+            [attr.aria-invalid]="hasFieldError('total')"
+          />
+          @if (hasFieldError('total')) {
+            <p class="field-error">{{ getFieldError('total') }}</p>
+          }
+        </div>
+
+        <div class="field field-full" [class.field-invalid]="hasFieldError('notes')">
+          <label for="notes">Notas</label>
+          <textarea
+            id="notes"
+            formControlName="notes"
+            [attr.aria-invalid]="hasFieldError('notes')"
+          ></textarea>
+          @if (hasFieldError('notes')) {
+            <p class="field-error">{{ getFieldError('notes') }}</p>
+          }
+        </div>
+
+        <div class="actions field-full">
+          <button class="button" type="submit" [disabled]="isSaving() || form.invalid">
+            {{ isSaving() ? 'Guardando...' : editingId() ? 'Actualizar' : 'Crear pedido' }}
+          </button>
+          <button class="button-ghost" type="button" (click)="resetForm()">Limpiar</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="page-title">
+        <h2>Listado general</h2>
+        <p>Consulta los pedidos registrados y ajusta su avance cuando sea necesario.</p>
+      </div>
+
+      @if (isLoading()) {
+        <p class="muted">Cargando pedidos...</p>
+      } @else if (orders().length) {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Solicitud</th>
+                <th>Cliente</th>
+                <th>Estado</th>
+                <th>Cantidad</th>
+                <th>Total</th>
+                <th>Notas</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (order of orders(); track order.id) {
+                <tr>
+                  <td>{{ requestTitle(order.request_id) }}</td>
+                  <td>{{ clientName(order.client_id) }}</td>
+                  <td>
+                    <span
+                      class="status-chip"
+                      [class.warn]="statusClass(order.status) === 'warn'"
+                      [class.danger]="statusClass(order.status) === 'danger'"
+                    >
+                      {{ orderStatusLabels[order.status] }}
+                    </span>
+                  </td>
+                  <td>{{ order.quantity }}</td>
+                  <td>{{ order.total | currency: 'MXN' }}</td>
+                  <td>{{ order.notes || 'Sin notas' }}</td>
+                  <td>
+                    <div class="actions">
+                      <button class="button-secondary" type="button" (click)="editOrder(order)">
+                        Editar
+                      </button>
+                      <button class="button-danger" type="button" (click)="deleteOrder(order)">
+                        Eliminar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="empty-state">No hay pedidos registrados.</div>
+      }
+    </section>
+  </div>
+</section>

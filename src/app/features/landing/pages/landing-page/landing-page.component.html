@@ -1,2 +1,36 @@
-<h2>Landing</h2>
-<p>Aqui ira la presentacion principal del sistema de pedidos de impresion 3D.</p>
+<section class="page-shell">
+  <div class="panel hero">
+    <div class="hero-copy">
+      <span class="eyebrow">PrintLab 3D</span>
+      <h1>Solicita, administra y da seguimiento a cada impresion desde una sola plataforma.</h1>
+      <p>
+        Clientes y administradores pueden consultar avances, actualizar datos y mantener el flujo
+        de trabajo ordenado de principio a fin.
+      </p>
+
+      <div class="actions">
+        @if (currentUser()) {
+          <a class="button" [routerLink]="dashboardLink()">Ir a mi panel</a>
+        } @else {
+          <a class="button" routerLink="/login">Ingresar</a>
+          <a class="button-secondary" routerLink="/register">Crear cuenta</a>
+        }
+      </div>
+    </div>
+
+    <div class="hero-aside panel">
+      <h2>Lo que puedes hacer aqui</h2>
+      <div class="stack-sm">
+        <div class="notice">Registrar solicitudes con detalles, materiales y fechas estimadas.</div>
+        <div class="notice">Consultar pedidos, costos y estado de avance en cualquier momento.</div>
+        <div class="notice">Mantener perfiles y operaciones administrativas actualizados desde el panel.</div>
+      </div>
+    </div>
+  </div>
+
+  @if (!isConfigured()) {
+    <div class="alert">
+      Falta configurar la conexion con la base de datos para habilitar el uso completo del sistema.
+    </div>
+  }
+</section>

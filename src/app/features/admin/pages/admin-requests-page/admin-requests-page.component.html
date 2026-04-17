@@ -1,2 +1,185 @@
-<h2>Solicitudes Admin</h2>
-<p>Aqui ira la vista de solicitudes para el administrador.</p>
+<section class="page-shell">
+  <div class="page-header">
+    <div class="page-title">
+      <span class="eyebrow">Admin</span>
+      <h1>Solicitudes</h1>
+      <p>Organiza, actualiza y asigna solicitudes para dar continuidad al trabajo.</p>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (successMessage()) {
+    <div class="notice">{{ successMessage() }}</div>
+  }
+
+  <div class="split-layout">
+    <section class="panel">
+      <div class="page-title">
+        <h2>{{ editingId() ? 'Editar solicitud' : 'Nueva solicitud' }}</h2>
+        <p>Registra la informacion principal y asigna la solicitud al cliente correcto.</p>
+      </div>
+
+      <form class="form-grid" novalidate [formGroup]="form" (ngSubmit)="submit()">
+        <div class="field field-full" [class.field-invalid]="hasFieldError('title')">
+          <label for="title">Titulo</label>
+          <input
+            id="title"
+            type="text"
+            formControlName="title"
+            [attr.aria-invalid]="hasFieldError('title')"
+          />
+          @if (hasFieldError('title')) {
+            <p class="field-error">{{ getFieldError('title') }}</p>
+          }
+        </div>
+
+        <div class="field field-full" [class.field-invalid]="hasFieldError('description')">
+          <label for="description">Descripcion</label>
+          <textarea
+            id="description"
+            formControlName="description"
+            [attr.aria-invalid]="hasFieldError('description')"
+          ></textarea>
+          @if (hasFieldError('description')) {
+            <p class="field-error">{{ getFieldError('description') }}</p>
+          }
+        </div>
+
+        <div class="field" [class.field-invalid]="hasFieldError('material')">
+          <label for="material">Material</label>
+          <select
+            id="material"
+            formControlName="material"
+            [attr.aria-invalid]="hasFieldError('material')"
+          >
+            @for (material of materialOptions; track material) {
+              <option [value]="material">{{ material }}</option>
+            }
+          </select>
+          @if (hasFieldError('material')) {
+            <p class="field-error">{{ getFieldError('material') }}</p>
+          }
+        </div>
+
+        <div class="field" [class.field-invalid]="hasFieldError('quantity')">
+          <label for="quantity">Cantidad</label>
+          <input
+            id="quantity"
+            type="number"
+            min="1"
+            formControlName="quantity"
+            [attr.aria-invalid]="hasFieldError('quantity')"
+          />
+          @if (hasFieldError('quantity')) {
+            <p class="field-error">{{ getFieldError('quantity') }}</p>
+          }
+        </div>
+
+        <div class="field" [class.field-invalid]="hasFieldError('status')">
+          <label for="status">Estado</label>
+          <select id="status" formControlName="status" [attr.aria-invalid]="hasFieldError('status')">
+            @for (status of requestStatuses; track status) {
+              <option [value]="status">{{ requestStatusLabels[status] }}</option>
+            }
+          </select>
+          @if (hasFieldError('status')) {
+            <p class="field-error">{{ getFieldError('status') }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="due_date">Fecha compromiso</label>
+          <input id="due_date" type="date" formControlName="due_date" />
+        </div>
+
+        <div class="field field-full" [class.field-invalid]="hasFieldError('client_id')">
+          <label for="client_id">Cliente</label>
+          <select
+            id="client_id"
+            formControlName="client_id"
+            [attr.aria-invalid]="hasFieldError('client_id')"
+          >
+            @for (client of clientOptions(); track client.id) {
+              <option [value]="client.id">{{ client.name }} | {{ client.email }}</option>
+            }
+          </select>
+          @if (hasFieldError('client_id')) {
+            <p class="field-error">{{ getFieldError('client_id') }}</p>
+          }
+        </div>
+
+        <div class="actions field-full">
+          <button class="button" type="submit" [disabled]="isSaving() || form.invalid">
+            {{ isSaving() ? 'Guardando...' : editingId() ? 'Actualizar' : 'Crear solicitud' }}
+          </button>
+          <button class="button-ghost" type="button" (click)="resetForm()">Limpiar</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="page-title">
+        <h2>Listado general</h2>
+        <p>Revisa el estado de cada solicitud y actualizala cuando sea necesario.</p>
+      </div>
+
+      @if (isLoading()) {
+        <p class="muted">Cargando solicitudes...</p>
+      } @else if (requests().length) {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Titulo</th>
+                <th>Cliente</th>
+                <th>Estado</th>
+                <th>Material</th>
+                <th>Cantidad</th>
+                <th>Entrega</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (request of requests(); track request.id) {
+                <tr>
+                  <td>
+                    <strong>{{ request.title }}</strong>
+                    <p class="muted">{{ request.description }}</p>
+                  </td>
+                  <td>{{ requestClientName(request.client_id) }}</td>
+                  <td>
+                    <span
+                      class="status-chip"
+                      [class.warn]="statusClass(request.status) === 'warn'"
+                      [class.danger]="statusClass(request.status) === 'danger'"
+                    >
+                      {{ requestStatusLabels[request.status] }}
+                    </span>
+                  </td>
+                  <td>{{ request.material }}</td>
+                  <td>{{ request.quantity }}</td>
+                  <td>{{ request.due_date ? (request.due_date | date: 'mediumDate') : 'Sin fecha' }}</td>
+                  <td>
+                    <div class="actions">
+                      <button class="button-secondary" type="button" (click)="editRequest(request)">
+                        Editar
+                      </button>
+                      <button class="button-danger" type="button" (click)="deleteRequest(request)">
+                        Eliminar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="empty-state">No hay solicitudes registradas.</div>
+      }
+    </section>
+  </div>
+</section>

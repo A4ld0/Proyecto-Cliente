@@ -5,9 +5,38 @@
     <a routerLink="/landing" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
       Inicio
     </a>
-    <a routerLink="/login" routerLinkActive="active">Login</a>
-    <a routerLink="/register" routerLinkActive="active">Registro</a>
-    <a routerLink="/client/dashboard" routerLinkActive="active">Cliente</a>
-    <a routerLink="/admin/dashboard" routerLinkActive="active">Admin</a>
+    @if (!isAuthenticated()) {
+      <a routerLink="/login" routerLinkActive="active">Ingresar</a>
+      <a routerLink="/register" routerLinkActive="active">Crear cuenta</a>
+    }
+
+    @if (isAuthenticated()) {
+      <a [routerLink]="dashboardLink()" routerLinkActive="active">Panel</a>
+
+      @if (currentUser()?.role === 'CLIENT') {
+        <a routerLink="/client/requests" routerLinkActive="active">Solicitudes</a>
+        <a routerLink="/client/orders" routerLinkActive="active">Pedidos</a>
+        <a routerLink="/client/profile" routerLinkActive="active">Perfil</a>
+      }
+
+      @if (currentUser()?.role === 'ADMIN') {
+        <a routerLink="/admin/requests" routerLinkActive="active">Solicitudes</a>
+        <a routerLink="/admin/orders" routerLinkActive="active">Pedidos</a>
+        <a routerLink="/admin/users" routerLinkActive="active">Usuarios</a>
+      }
+    }
   </nav>
+
+  <div class="session-box">
+    @if (currentUser(); as user) {
+      <div class="identity">
+        <strong>{{ user.name }}</strong>
+        <span>{{ roleLabels[user.role] }}</span>
+      </div>
+
+      <button class="logout-button" type="button" (click)="signOut()">Salir</button>
+    } @else {
+      <span class="muted-copy">Ingresa para revisar tus solicitudes, pedidos y avances.</span>
+    }
+  </div>
 </header>

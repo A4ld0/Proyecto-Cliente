@@ -1,2 +1,89 @@
-<h2>Dashboard Admin</h2>
-<p>Aqui ira el resumen general del administrador.</p>
+<section class="page-shell">
+  <div class="page-header">
+    <div class="page-title">
+      <span class="eyebrow">Admin</span>
+      <h1>Panel de administracion</h1>
+      <p>Supervisa la actividad general, los pedidos en curso y la carga de trabajo del equipo.</p>
+    </div>
+
+    <div class="actions">
+      <a class="button" routerLink="/admin/requests">Gestionar solicitudes</a>
+      <a class="button-secondary" routerLink="/admin/orders">Gestionar pedidos</a>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+  }
+
+  <div class="cards-grid">
+    <article class="stat-card">
+      <span class="muted">Usuarios totales</span>
+      <strong>{{ users().length }}</strong>
+    </article>
+
+    <article class="stat-card">
+      <span class="muted">Clientes</span>
+      <strong>{{ clientsCount() }}</strong>
+    </article>
+
+    <article class="stat-card">
+      <span class="muted">Solicitudes activas</span>
+      <strong>{{ activeRequests() }}</strong>
+    </article>
+
+    <article class="stat-card">
+      <span class="muted">Ventas acumuladas</span>
+      <strong>{{ totalSales() | currency: 'MXN' }}</strong>
+    </article>
+  </div>
+
+  <div class="grid-two">
+    <section class="panel">
+      <div class="page-title">
+        <h2>Solicitudes recientes</h2>
+        <p>Identifica rapido nuevas solicitudes y cambios recientes.</p>
+      </div>
+
+      @if (isLoading()) {
+        <p class="muted">Cargando solicitudes...</p>
+      } @else if (requests().length) {
+        <div class="stack-sm">
+          @for (request of requests().slice(0, 5); track request.id) {
+            <div class="notice">
+              <strong>{{ request.title }}</strong>
+              <p>
+                {{ requestStatusLabels[request.status] }} | {{ request.material }} |
+                {{ request.quantity }} piezas
+              </p>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">No hay solicitudes registradas.</div>
+      }
+    </section>
+
+    <section class="panel">
+      <div class="page-title">
+        <h2>Pedidos recientes</h2>
+        <p>Consulta pedidos activos y montos acumulados.</p>
+      </div>
+
+      @if (isLoading()) {
+        <p class="muted">Cargando pedidos...</p>
+      } @else if (orders().length) {
+        <div class="stack-sm">
+          @for (order of orders().slice(0, 5); track order.id) {
+            <div class="notice">
+              <strong>{{ orderStatusLabels[order.status] }}</strong>
+              <p>{{ order.quantity }} piezas | {{ order.total | currency: 'MXN' }}</p>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">No hay pedidos creados.</div>
+      }
+    </section>
+  </div>
+</section>

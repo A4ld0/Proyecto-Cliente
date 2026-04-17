@@ -1,2 +1,69 @@
-<h2>Pedidos Cliente</h2>
-<p>Aqui ira la vista de pedidos del cliente.</p>
+<section class="page-shell">
+  <div class="page-header">
+    <div class="page-title">
+      <span class="eyebrow">Cliente</span>
+      <h1>Pedidos</h1>
+      <p>Da seguimiento a cada pedido y consulta su informacion principal.</p>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+  }
+
+  <div class="cards-grid">
+    <article class="stat-card">
+      <span class="muted">Pedidos registrados</span>
+      <strong>{{ orders().length }}</strong>
+    </article>
+
+    <article class="stat-card">
+      <span class="muted">Total acumulado</span>
+      <strong>{{ totalAmount() | currency: 'MXN' }}</strong>
+    </article>
+  </div>
+
+  <section class="panel">
+    <div class="page-title">
+      <h2>Listado de pedidos</h2>
+      <p>Aqui puedes revisar estado, cantidad, notas y fecha de registro.</p>
+    </div>
+
+    @if (isLoading()) {
+      <p class="muted">Cargando pedidos...</p>
+    } @else if (orders().length) {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Solicitud</th>
+              <th>Estado</th>
+              <th>Cantidad</th>
+              <th>Total</th>
+              <th>Notas</th>
+              <th>Creado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of orders(); track order.id) {
+              <tr>
+                <td>{{ requestTitle(order.request_id) }}</td>
+                <td>
+                  <span class="status-chip" [class.warn]="statusClass(order.status) === 'warn'" [class.danger]="statusClass(order.status) === 'danger'">
+                    {{ orderStatusLabels[order.status] }}
+                  </span>
+                </td>
+                <td>{{ order.quantity }}</td>
+                <td>{{ order.total | currency: 'MXN' }}</td>
+                <td>{{ order.notes || 'Sin notas' }}</td>
+                <td>{{ order.created_at ? (order.created_at | date: 'medium') : 'Sin fecha' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="empty-state">Aun no tienes pedidos registrados.</div>
+    }
+  </section>
+</section>
