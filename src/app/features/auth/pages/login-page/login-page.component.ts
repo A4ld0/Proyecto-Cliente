@@ -29,8 +29,8 @@ export class LoginPageComponent {
       email: 'Escribe un correo valido.'
     },
     password: {
-      required: 'Ingresa tu contrasena.',
-      minlength: 'La contrasena debe tener al menos 6 caracteres.'
+      required: 'Ingresa tu contraseña.',
+      minlength: 'La contraseña debe tener al menos 6 caracteres.'
     }
   };
 

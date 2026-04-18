@@ -34,8 +34,8 @@ export class RegisterPageComponent {
       email: 'Escribe un correo valido.'
     },
     password: {
-      required: 'Ingresa la contrasena.',
-      minlength: 'La contrasena debe tener al menos 8 caracteres.',
+      required: 'Ingresa la contraseña.',
+      minlength: 'La contraseña debe tener al menos 8 caracteres.',
       pattern: 'Usa al menos una letra y un numero.'
     },
     phone: {
