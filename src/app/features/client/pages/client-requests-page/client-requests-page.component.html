@@ -1,4 +1,4 @@
-<section class="page-shell">
+<section class="page-shell client-shell">
   <div class="page-header">
     <div class="page-title">
       <span class="eyebrow">Cliente</span>
@@ -15,8 +15,8 @@
     <div class="notice">{{ successMessage() }}</div>
   }
 
-  <div class="split-layout">
-    <section class="panel">
+  <div class="split-layout requests-layout">
+    <section class="panel request-form-panel">
       <div class="page-title">
         <h2>{{ editingId() ? 'Editar solicitud' : 'Nueva solicitud' }}</h2>
         <p>Completa los datos principales para facilitar la revision y posterior cotizacion.</p>
@@ -88,58 +88,56 @@
       </form>
     </section>
 
-    <section class="panel">
+    <section class="panel requests-list-panel">
       <div class="page-title">
-        <h2>Tus registros</h2>
-        <p>Consulta tus solicitudes y manten su informacion actualizada.</p>
+        <h2>Tus solicitudes</h2>
+        <p>Revisa el estado de cada solicitud y actualizala cuando lo necesites.</p>
       </div>
 
       @if (isLoading()) {
         <p class="muted">Cargando solicitudes...</p>
       } @else if (requests().length) {
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Titulo</th>
-                <th>Tipo</th>
-                <th>Estado</th>
-                <th>Creada</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (request of requests(); track request.id) {
-                <tr>
-                  <td>
-                    <strong>{{ request.title }}</strong>
-                    <p class="muted">{{ request.description || 'Sin descripcion' }}</p>
-                  </td>
-                  <td>{{ requestTypeLabels[request.request_type] }}</td>
-                  <td>
-                    <span
-                      class="status-chip"
-                      [class.warn]="statusClass(request.status) === 'warn'"
-                      [class.danger]="statusClass(request.status) === 'danger'"
-                    >
-                      {{ requestStatusLabels[request.status] }}
-                    </span>
-                  </td>
-                  <td>{{ request.created_at ? (request.created_at | date: 'medium') : 'Sin fecha' }}</td>
-                  <td>
-                    <div class="actions">
-                      <button class="button-secondary" type="button" (click)="editRequest(request)">
-                        Editar
-                      </button>
-                      <button class="button-danger" type="button" (click)="deleteRequest(request)">
-                        Eliminar
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+        <div class="request-list" role="list">
+          @for (request of requests(); track request.id) {
+            <article class="request-card" role="listitem">
+              <div class="request-card__content">
+                <div class="request-card__copy">
+                  <h3>{{ request.title }}</h3>
+                  <p>{{ request.description || 'Sin descripcion' }}</p>
+                </div>
+
+                <div class="request-card__chips" aria-label="Detalles de la solicitud">
+                  <span class="request-type-chip">{{ requestTypeLabels[request.request_type] }}</span>
+                  <span
+                    class="status-chip"
+                    [class.warn]="statusClass(request.status) === 'warn'"
+                    [class.danger]="statusClass(request.status) === 'danger'"
+                  >
+                    {{ requestStatusLabels[request.status] }}
+                  </span>
+                </div>
+              </div>
+
+              <footer class="request-card__footer">
+                <span class="request-date">
+                  @if (request.created_at) {
+                    Creada el {{ request.created_at | date: 'mediumDate' }}
+                  } @else {
+                    Sin fecha
+                  }
+                </span>
+
+                <div class="actions request-actions">
+                  <button class="button-secondary" type="button" (click)="editRequest(request)">
+                    Editar
+                  </button>
+                  <button class="button-danger" type="button" (click)="deleteRequest(request)">
+                    Eliminar
+                  </button>
+                </div>
+              </footer>
+            </article>
+          }
         </div>
       } @else {
         <div class="empty-state">Todavia no has creado solicitudes.</div>

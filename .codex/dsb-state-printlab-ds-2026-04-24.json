@@ -1,0 +1,162 @@
+{
+  "runId": "printlab-ds-2026-04-24",
+  "fileKey": "hmljkm5VnH45BKfQPzxSXN",
+  "phase": "phase3",
+  "step": "component-button-validated",
+  "entities": {
+    "collections": {
+      "Primitives": {
+        "id": "VariableCollectionId:3:2",
+        "modes": {
+          "Value": "3:0"
+        },
+        "variableCount": 36
+      },
+      "Color": {
+        "id": "VariableCollectionId:3:3",
+        "modes": {
+          "Admin Light": "3:1",
+          "Client Dark": "3:2",
+          "Marketing Dark": "3:3"
+        },
+        "variableCount": 27
+      },
+      "Spacing": {
+        "id": "VariableCollectionId:3:4",
+        "modes": {
+          "Value": "3:4"
+        },
+        "variableCount": 9
+      },
+      "Radius": {
+        "id": "VariableCollectionId:3:5",
+        "modes": {
+          "Value": "3:5"
+        },
+        "variableCount": 7
+      },
+      "Effects": {
+        "id": "VariableCollectionId:3:6",
+        "modes": {
+          "Value": "3:6"
+        },
+        "variableCount": 7
+      },
+      "Typography": {
+        "id": "VariableCollectionId:3:7",
+        "modes": {
+          "Value": "3:7"
+        },
+        "variableCount": 24
+      }
+    },
+    "styles": {
+      "text": {
+        "Display/Hero": "S:9a2fabe9b126f0569c0264af0fed297baef9d744,",
+        "Display/Page": "S:0c76cdfd06f4b387d431f581f391d893b2bd5319,",
+        "Heading/Page": "S:fe02d49abc54200ccf40e712e9acca6efe4c661d,",
+        "Heading/Card": "S:37f5ddd8e0c5ac3a2fedcd9d44cccccd3f287ca7,",
+        "Body/Lead": "S:d94852b8950a9fcfdc5dbaff545f08df6809cdab,",
+        "Body/Default": "S:2be16c3e8c52f2bd9ce667530bf6beadb3206610,",
+        "Body/Compact": "S:dd9a306fa6bffcbade6e6acdd3c7ed69e8dc1505,",
+        "Label/Field": "S:f0f2136f663cb41eea25e565a01791231f99958b,",
+        "Label/Eyebrow": "S:3ba194a31c140454fd2ea6fd99eb5fc18a52c087,",
+        "Label/Chip": "S:af2bf4df2160ca74bc83cefc7baa272c881ecc68,",
+        "Caption/Meta": "S:b009cd62e55edef8dde722d738b0f255f8f597ee,"
+      },
+      "effects": {
+        "Shadow/Admin Panel": "S:2615b2ec81eafec535071ebd48a0d3e2104f3d79,",
+        "Shadow/Admin Button": "S:0fe58cb4c3b4da6f6a1e9cef2f289470cfc05f69,",
+        "Shadow/Client Panel": "S:7edb62849462f2700a64a1ccb281dce32df6eea9,",
+        "Shadow/Client Card Inset": "S:d455850098cef9bf2c77b280fa6f5f1633e1a6c6,",
+        "Shadow/Marketing CTA Neon": "S:b6ed1111b73b1174c2ad5164bedf4b1c3f925570,",
+        "Shadow/Marketing Hero Visual": "S:2d0facb0918e959720fe31036844f267fa8869f5,"
+      }
+    },
+    "pages": {
+      "Cover": {
+        "id": "0:1",
+        "rootId": "22:2"
+      },
+      "Getting Started": {
+        "id": "19:2",
+        "rootId": "22:26"
+      },
+      "Foundations": {
+        "id": "19:3",
+        "rootId": "23:2",
+        "sections": [
+          "Color",
+          "Typography",
+          "Spacing",
+          "Border Radius",
+          "Effects"
+        ]
+      },
+      "--- Components ---": {
+        "id": "19:4"
+      },
+      "Components": {
+        "id": "19:5"
+      },
+      "--- Utilities ---": {
+        "id": "19:6"
+      },
+      "Utilities": {
+        "id": "19:7"
+      },
+      "Button": {
+        "id": "32:2",
+        "docId": "32:3",
+        "stageId": "36:2",
+        "componentSetId": "36:3"
+      }
+    },
+    "components": {
+      "Button": {
+        "pageId": "32:2",
+        "componentSetId": "36:3",
+        "variantCount": 16,
+        "variantAxes": {
+          "Mode": [
+            "Admin Light",
+            "Client Dark"
+          ],
+          "Style": [
+            "Primary",
+            "Secondary",
+            "Ghost",
+            "Danger"
+          ],
+          "State": [
+            "Default",
+            "Disabled"
+          ]
+        }
+      }
+    }
+  },
+  "summary": {
+    "variablesTotal": 110,
+    "textStylesTotal": 11,
+    "effectStylesTotal": 6,
+    "missingScopes": 0,
+    "missingWebCodeSyntax": 0,
+    "pageCount": 8,
+    "documentedFoundationsSections": 5,
+    "componentsBuilt": 1
+  },
+  "pendingValidations": [],
+  "completedSteps": [
+    "phase0",
+    "phase1-collections",
+    "phase1-primitives",
+    "phase1-semantic",
+    "phase1-foundations-styles",
+    "phase1-validation",
+    "phase2-pages",
+    "phase2-foundations-docs",
+    "phase2-validation",
+    "phase3-button"
+  ]
+}

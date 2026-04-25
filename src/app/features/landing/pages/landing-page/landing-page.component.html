@@ -1,36 +1,44 @@
-<section class="page-shell">
-  <div class="panel hero">
+<section class="landing-shell">
+  <div class="hero-glow hero-glow-left"></div>
+  <div class="hero-glow hero-glow-right"></div>
+
+  <section class="hero-section">
     <div class="hero-copy">
-      <span class="eyebrow">PrintLab 3D</span>
-      <h1>Solicita, administra y da seguimiento a cada impresion desde una sola plataforma.</h1>
+      <span class="hero-kicker">PrintLab 3D</span>
+
+      <h1>
+        SOLUCIONES DE <span>IMPRESIÓN 3D</span> PARA TUS IDEAS
+      </h1>
+
       <p>
-        Clientes y administradores pueden consultar avances, actualizar datos y mantener el flujo
-        de trabajo ordenado de principio a fin.
+        Desde una referencia o archivo STL hasta el seguimiento del pedido, organiza solicitudes,
+        cotizaciones y avances en una sola plataforma.
       </p>
 
-      <div class="actions">
+      <div class="hero-actions">
         @if (currentUser()) {
-          <a class="button" [routerLink]="dashboardLink()">Ir a mi panel</a>
+          <a class="cta-primary" [routerLink]="dashboardLink()">Ir a mi panel</a>
         } @else {
-          <a class="button" routerLink="/login">Ingresar</a>
-          <a class="button-secondary" routerLink="/register">Crear cuenta</a>
+          <a class="cta-primary" routerLink="/login">Acceder</a>
+        }
+      </div>
+
+      <div class="hero-highlights">
+        @for (highlight of highlights; track highlight) {
+          <span>{{ highlight }}</span>
         }
       </div>
     </div>
 
-    <div class="hero-aside panel">
-      <h2>Lo que puedes hacer aqui</h2>
-      <div class="stack-sm">
-        <div class="notice">Registrar solicitudes con detalles, materiales y fechas estimadas.</div>
-        <div class="notice">Consultar pedidos, costos y estado de avance en cualquier momento.</div>
-        <div class="notice">Mantener perfiles y operaciones administrativas actualizados desde el panel.</div>
-      </div>
+    <div class="hero-visual" aria-hidden="true">
+      <img src="assets/landing/hero-model.png" alt="" />
     </div>
-  </div>
+
+  </section>
 
   @if (!isConfigured()) {
-    <div class="alert">
-      Falta configurar la conexion con la base de datos para habilitar el uso completo del sistema.
+    <div class="system-alert">
+      Falta configurar la conexión con Supabase para habilitar el uso completo del sistema.
     </div>
   }
 </section>
