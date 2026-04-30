@@ -1,3 +1,136 @@
 :host {
   display: block;
 }
+
+.requests-layout {
+  align-items: start;
+  grid-template-columns: minmax(320px, 0.86fr) minmax(0, 1.14fr);
+}
+
+.request-form-panel,
+.requests-list-panel {
+  min-width: 0;
+}
+
+.requests-list-panel {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.request-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.request-card {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 1.15rem;
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.request-card:hover {
+  background: rgba(255, 255, 255, 0.065);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.request-card__content {
+  align-items: start;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.request-card__copy {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.request-card__copy h3 {
+  color: #ffffff;
+  font-size: 1.08rem;
+  line-height: 1.2;
+}
+
+.request-card__copy p {
+  color: var(--muted);
+  display: -webkit-box;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.request-card__chips,
+.request-card__footer,
+.request-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.request-card__chips {
+  justify-content: flex-end;
+}
+
+.request-type-chip {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.35rem 0.7rem;
+}
+
+.request-card__footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  justify-content: space-between;
+  padding-top: 0.9rem;
+}
+
+.request-date {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.request-actions .button-secondary,
+.request-actions .button-danger {
+  min-height: 2.35rem;
+  padding: 0.55rem 0.85rem;
+}
+
+@media (max-width: 1024px) {
+  .requests-layout,
+  .request-card__content {
+    grid-template-columns: 1fr;
+  }
+
+  .request-card__chips {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .request-card__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .request-actions,
+  .request-actions .button-secondary,
+  .request-actions .button-danger {
+    width: 100%;
+  }
+}

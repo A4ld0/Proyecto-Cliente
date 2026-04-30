@@ -31,6 +31,9 @@ yarn-error.log
 
 # Miscellaneous
 /.angular/cache
+.codex/
+AGENTS.md
+FIGMA_LIBRARY_PLAN.md
 .sass-cache/
 /connect.lock
 /coverage

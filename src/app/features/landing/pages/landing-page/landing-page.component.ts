@@ -17,4 +17,10 @@ export class LandingPageComponent {
   readonly dashboardLink = computed(() =>
     this.currentUser()?.role === 'ADMIN' ? '/admin/dashboard' : '/client/dashboard'
   );
+
+  readonly highlights = [
+    'Solicitudes centralizadas',
+    'Seguimiento de pedidos',
+    'Cotizaciones organizadas'
+  ];
 }
