@@ -51,3 +51,5 @@ export const QUOTE_STATUS_LABELS: Record<QuoteStatus, string> = {
   REJECTED: 'Rechazada',
   EXPIRED: 'Vencida'
 };
+
+export const QUOTE_STATUSES: QuoteStatus[] = ['DRAFT', 'SENT', 'ACCEPTED', 'REJECTED', 'EXPIRED'];

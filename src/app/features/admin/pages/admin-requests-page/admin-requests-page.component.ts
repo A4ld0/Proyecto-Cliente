@@ -3,12 +3,13 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import {
+  QUOTE_STATUS_LABELS,
+  QUOTE_STATUSES,
   REQUEST_STATUSES,
   REQUEST_STATUS_LABELS,
-  REQUEST_TYPE_LABELS,
-  REQUEST_TYPES
+  REQUEST_TYPE_LABELS
 } from '../../../../core/constants/printlab.constants';
-import { RequestsService, UsersService } from '../../../../core/services';
+import { AuthService, QuotesService, RequestsService, UsersService } from '../../../../core/services';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import {
   getFieldErrorMessage,
@@ -17,9 +18,10 @@ import {
 } from '../../../../core/utils/form-errors.util';
 import {
   PrintRequest,
-  PrintRequestPayload,
+  Quote,
+  QuotePayload,
+  QuoteStatus,
   RequestStatus,
-  RequestType,
   User
 } from '../../../../interfaces';
 
@@ -31,58 +33,51 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdminRequestsPageComponent {
+  private readonly authService = inject(AuthService);
+  private readonly quotesService = inject(QuotesService);
   private readonly requestsService = inject(RequestsService);
   private readonly usersService = inject(UsersService);
 
   readonly requests = signal<PrintRequest[]>([]);
+  readonly quotes = signal<Quote[]>([]);
   readonly users = signal<User[]>([]);
-  readonly clientOptions = computed(() => this.users().filter((user) => user.role === 'CLIENT'));
+  readonly quotingRequest = computed(() =>
+    this.requests().find((request) => request.id === this.quotingRequestId())
+  );
   readonly requestStatuses = REQUEST_STATUSES;
   readonly requestStatusLabels = REQUEST_STATUS_LABELS;
-  readonly requestTypes = REQUEST_TYPES;
   readonly requestTypeLabels = REQUEST_TYPE_LABELS;
+  readonly quoteStatuses = QUOTE_STATUSES;
+  readonly quoteStatusLabels = QUOTE_STATUS_LABELS;
   readonly isLoading = signal(true);
-  readonly isSaving = signal(false);
-  readonly editingId = signal<string | null>(null);
+  readonly isUpdatingRequest = signal(false);
+  readonly isSavingQuote = signal(false);
+  readonly editingQuoteId = signal<string | null>(null);
+  readonly quotingRequestId = signal<string | null>(null);
   readonly errorMessage = signal('');
   readonly successMessage = signal('');
   readonly validationMessages: Record<string, ValidationMessages> = {
-    title: {
-      required: 'Ingresa un titulo para la solicitud.',
-      minlength: 'El titulo debe tener al menos 3 caracteres.',
-      maxlength: 'El titulo no debe exceder 80 caracteres.'
-    },
-    description: {
-      required: 'Agrega una descripcion.',
-      minlength: 'La descripcion debe tener al menos 10 caracteres.',
-      maxlength: 'La descripcion no debe exceder 500 caracteres.'
-    },
-    request_type: {
-      required: 'Selecciona el tipo de solicitud.'
-    },
     status: {
       required: 'Selecciona el estado.'
     },
-    client_id: {
-      required: 'Selecciona un cliente.'
+    price_total: {
+      required: 'Ingresa el total cotizado.',
+      min: 'El total debe ser mayor a cero.'
+    },
+    estimated_days: {
+      min: 'Los dias estimados deben ser mayores a cero.'
     }
   };
 
-  readonly form = new FormGroup({
-    title: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(80)]
+  readonly quoteForm = new FormGroup({
+    price_total: new FormControl<number | null>(null, {
+      validators: [Validators.required, Validators.min(1)]
     }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(10), Validators.maxLength(500)]
+    estimated_days: new FormControl<number | null>(null, {
+      validators: [Validators.min(1)]
     }),
-    request_type: new FormControl('GENERAL_3D', {
-      nonNullable: true,
-      validators: [Validators.required]
-    }),
-    status: new FormControl('PENDING', { nonNullable: true, validators: [Validators.required] }),
-    client_id: new FormControl('', { nonNullable: true, validators: [Validators.required] })
+    notes: new FormControl('', { nonNullable: true }),
+    status: new FormControl('SENT', { nonNullable: true, validators: [Validators.required] })
   });
 
   constructor() {
@@ -94,17 +89,15 @@ export class AdminRequestsPageComponent {
     this.errorMessage.set('');
 
     try {
-      const [requests, users] = await Promise.all([
+      const [requests, quotes, users] = await Promise.all([
         firstValueFrom(this.requestsService.list()),
+        firstValueFrom(this.quotesService.list()),
         firstValueFrom(this.usersService.list())
       ]);
 
       this.requests.set(requests);
+      this.quotes.set(quotes);
       this.users.set(users);
-
-      if (!this.form.controls.client_id.value && this.clientOptions().length) {
-        this.form.controls.client_id.setValue(this.clientOptions()[0].id);
-      }
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'No pudimos cargar las solicitudes.'));
     } finally {
@@ -116,82 +109,106 @@ export class AdminRequestsPageComponent {
     return this.users().find((user) => user.id === clientId)?.full_name ?? clientId;
   }
 
-  editRequest(request: PrintRequest): void {
-    this.editingId.set(request.id);
+  quoteForRequest(requestId: string): Quote | undefined {
+    return this.quotes().find((quote) => quote.request_id === requestId);
+  }
+
+  openQuoteForm(request: PrintRequest): void {
+    const existingQuote = this.quoteForRequest(request.id);
+
+    this.quotingRequestId.set(request.id);
+    this.editingQuoteId.set(existingQuote?.id ?? null);
     this.successMessage.set('');
-    this.form.patchValue({
-      title: request.title,
-      description: request.description ?? '',
-      request_type: request.request_type,
-      status: request.status,
-      client_id: request.client_id
+    this.errorMessage.set('');
+    this.quoteForm.reset({
+      price_total: Number(existingQuote?.price_total ?? 0) || null,
+      estimated_days: existingQuote?.estimated_days ?? null,
+      notes: existingQuote?.notes ?? '',
+      status: existingQuote?.status ?? 'SENT'
     });
   }
 
-  resetForm(): void {
-    this.editingId.set(null);
-    this.form.reset({
-      title: '',
-      description: '',
-      request_type: 'GENERAL_3D',
-      status: 'PENDING',
-      client_id: this.clientOptions()[0]?.id ?? ''
+  closeQuoteForm(): void {
+    this.quotingRequestId.set(null);
+    this.editingQuoteId.set(null);
+    this.quoteForm.reset({
+      price_total: null,
+      estimated_days: null,
+      notes: '',
+      status: 'SENT'
     });
   }
 
-  async submit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+  async submitQuote(): Promise<void> {
+    const request = this.quotingRequest();
+    const admin = this.authService.currentUser();
+
+    if (this.quoteForm.invalid) {
+      this.quoteForm.markAllAsTouched();
       return;
     }
 
-    this.isSaving.set(true);
+    if (!request || !admin) {
+      this.errorMessage.set('Selecciona una solicitud antes de cotizar.');
+      return;
+    }
+
+    this.isSavingQuote.set(true);
     this.errorMessage.set('');
     this.successMessage.set('');
 
-    const rawValue = this.form.getRawValue();
-    const payload: PrintRequestPayload = {
-      title: rawValue.title,
-      description: rawValue.description || null,
-      request_type: rawValue.request_type as RequestType,
-      status: rawValue.status as RequestStatus,
-      client_id: rawValue.client_id
+    const rawValue = this.quoteForm.getRawValue();
+    const payload: QuotePayload = {
+      request_id: request.id,
+      admin_id: admin.id,
+      material_id: null,
+      price_total: Number(rawValue.price_total),
+      estimated_days: rawValue.estimated_days ? Number(rawValue.estimated_days) : null,
+      notes: rawValue.notes || null,
+      status: rawValue.status as QuoteStatus
     };
 
     try {
-      if (this.editingId()) {
-        await firstValueFrom(this.requestsService.update(this.editingId()!, payload));
-        this.successMessage.set('La solicitud se actualizo correctamente.');
+      if (this.editingQuoteId()) {
+        await firstValueFrom(this.quotesService.update(this.editingQuoteId()!, payload));
+        this.successMessage.set('La cotizacion se actualizo correctamente.');
       } else {
-        await firstValueFrom(this.requestsService.create(payload));
-        this.successMessage.set('La solicitud se creo correctamente.');
+        await firstValueFrom(this.quotesService.create(payload));
+        this.successMessage.set('La cotizacion se creo correctamente.');
       }
 
-      this.resetForm();
+      if (!['CLOSED', 'CANCELED'].includes(request.status)) {
+        await firstValueFrom(this.requestsService.update(request.id, { status: 'QUOTED' }));
+      }
+
+      this.closeQuoteForm();
       await this.loadData();
     } catch (error) {
-      this.errorMessage.set(getApiErrorMessage(error, 'No pudimos guardar la solicitud.'));
+      this.errorMessage.set(getApiErrorMessage(error, 'No pudimos guardar la cotizacion.'));
     } finally {
-      this.isSaving.set(false);
+      this.isSavingQuote.set(false);
     }
   }
 
-  async deleteRequest(request: PrintRequest): Promise<void> {
-    if (!window.confirm(`Deseas eliminar la solicitud "${request.title}"?`)) {
+  async updateRequestStatus(request: PrintRequest, status: string): Promise<void> {
+    if (request.status === status) {
       return;
     }
 
+    this.isUpdatingRequest.set(true);
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
     try {
-      await firstValueFrom(this.requestsService.delete(request.id));
-      this.successMessage.set('La solicitud se elimino correctamente.');
-
-      if (this.editingId() === request.id) {
-        this.resetForm();
-      }
-
+      await firstValueFrom(
+        this.requestsService.update(request.id, { status: status as RequestStatus })
+      );
+      this.successMessage.set('El estado de la solicitud se actualizo correctamente.');
       await this.loadData();
     } catch (error) {
-      this.errorMessage.set(getApiErrorMessage(error, 'No pudimos eliminar la solicitud.'));
+      this.errorMessage.set(getApiErrorMessage(error, 'No pudimos actualizar la solicitud.'));
+    } finally {
+      this.isUpdatingRequest.set(false);
     }
   }
 
@@ -207,11 +224,27 @@ export class AdminRequestsPageComponent {
     return '';
   }
 
-  hasFieldError(controlName: string): boolean {
-    return isFieldInvalid(this.form, controlName);
+  quoteStatusClass(status: QuoteStatus): string {
+    if (['REJECTED', 'EXPIRED'].includes(status)) {
+      return 'danger';
+    }
+
+    if (['DRAFT', 'SENT'].includes(status)) {
+      return 'warn';
+    }
+
+    return '';
   }
 
-  getFieldError(controlName: string): string {
-    return getFieldErrorMessage(this.form, controlName, this.validationMessages[controlName] ?? {});
+  hasQuoteFieldError(controlName: string): boolean {
+    return isFieldInvalid(this.quoteForm, controlName);
+  }
+
+  getQuoteFieldError(controlName: string): string {
+    return getFieldErrorMessage(
+      this.quoteForm,
+      controlName,
+      this.validationMessages[controlName] ?? {}
+    );
   }
 }

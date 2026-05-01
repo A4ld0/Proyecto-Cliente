@@ -1,9 +1,9 @@
-<section class="page-shell">
+<section class="page-shell admin-shell">
   <div class="page-header">
     <div class="page-title">
       <span class="eyebrow">Admin</span>
       <h1>Solicitudes</h1>
-      <p>Organiza, actualiza y asigna solicitudes segun el esquema real de la plataforma.</p>
+      <p>Revisa solicitudes de clientes, cambia su estado y genera cotizaciones.</p>
     </div>
   </div>
 
@@ -15,146 +15,142 @@
     <div class="notice">{{ successMessage() }}</div>
   }
 
-  <div class="split-layout">
-    <section class="panel">
-      <div class="page-title">
-        <h2>{{ editingId() ? 'Editar solicitud' : 'Nueva solicitud' }}</h2>
-        <p>Registra la informacion principal y asigna la solicitud al cliente correcto.</p>
-      </div>
-
-      <form class="form-grid" novalidate [formGroup]="form" (ngSubmit)="submit()">
-        <div class="field field-full" [class.field-invalid]="hasFieldError('title')">
-          <label for="title">Titulo</label>
-          <input
-            id="title"
-            type="text"
-            formControlName="title"
-            [attr.aria-invalid]="hasFieldError('title')"
-          />
-          @if (hasFieldError('title')) {
-            <p class="field-error">{{ getFieldError('title') }}</p>
-          }
+  <div class="requests-workspace">
+    <section class="panel quote-panel">
+      @if (quotingRequest(); as request) {
+        <div class="page-title">
+          <h2>{{ editingQuoteId() ? 'Editar cotizacion' : 'Nueva cotizacion' }}</h2>
+          <p>{{ request.title }} | {{ requestClientName(request.client_id) }}</p>
         </div>
 
-        <div class="field field-full" [class.field-invalid]="hasFieldError('description')">
-          <label for="description">Descripcion</label>
-          <textarea
-            id="description"
-            formControlName="description"
-            [attr.aria-invalid]="hasFieldError('description')"
-          ></textarea>
-          @if (hasFieldError('description')) {
-            <p class="field-error">{{ getFieldError('description') }}</p>
-          }
-        </div>
-
-        <div class="field" [class.field-invalid]="hasFieldError('request_type')">
-          <label for="request_type">Tipo</label>
-          <select
-            id="request_type"
-            formControlName="request_type"
-            [attr.aria-invalid]="hasFieldError('request_type')"
-          >
-            @for (requestType of requestTypes; track requestType) {
-              <option [value]="requestType">{{ requestTypeLabels[requestType] }}</option>
+        <form class="form-grid" novalidate [formGroup]="quoteForm" (ngSubmit)="submitQuote()">
+          <div class="field" [class.field-invalid]="hasQuoteFieldError('price_total')">
+            <label for="price_total">Total</label>
+            <input
+              id="price_total"
+              type="number"
+              min="1"
+              formControlName="price_total"
+              [attr.aria-invalid]="hasQuoteFieldError('price_total')"
+            />
+            @if (hasQuoteFieldError('price_total')) {
+              <p class="field-error">{{ getQuoteFieldError('price_total') }}</p>
             }
-          </select>
-          @if (hasFieldError('request_type')) {
-            <p class="field-error">{{ getFieldError('request_type') }}</p>
-          }
-        </div>
+          </div>
 
-        <div class="field" [class.field-invalid]="hasFieldError('status')">
-          <label for="status">Estado</label>
-          <select id="status" formControlName="status" [attr.aria-invalid]="hasFieldError('status')">
-            @for (status of requestStatuses; track status) {
-              <option [value]="status">{{ requestStatusLabels[status] }}</option>
+          <div class="field" [class.field-invalid]="hasQuoteFieldError('estimated_days')">
+            <label for="estimated_days">Dias estimados</label>
+            <input
+              id="estimated_days"
+              type="number"
+              min="1"
+              formControlName="estimated_days"
+              [attr.aria-invalid]="hasQuoteFieldError('estimated_days')"
+            />
+            @if (hasQuoteFieldError('estimated_days')) {
+              <p class="field-error">{{ getQuoteFieldError('estimated_days') }}</p>
             }
-          </select>
-          @if (hasFieldError('status')) {
-            <p class="field-error">{{ getFieldError('status') }}</p>
-          }
-        </div>
+          </div>
 
-        <div class="field field-full" [class.field-invalid]="hasFieldError('client_id')">
-          <label for="client_id">Cliente</label>
-          <select
-            id="client_id"
-            formControlName="client_id"
-            [attr.aria-invalid]="hasFieldError('client_id')"
-          >
-            @for (client of clientOptions(); track client.id) {
-              <option [value]="client.id">{{ client.full_name }} | {{ client.email }}</option>
+          <div class="field" [class.field-invalid]="hasQuoteFieldError('status')">
+            <label for="quote_status">Estado cotizacion</label>
+            <select
+              id="quote_status"
+              formControlName="status"
+              [attr.aria-invalid]="hasQuoteFieldError('status')"
+            >
+              @for (status of quoteStatuses; track status) {
+                <option [value]="status">{{ quoteStatusLabels[status] }}</option>
+              }
+            </select>
+            @if (hasQuoteFieldError('status')) {
+              <p class="field-error">{{ getQuoteFieldError('status') }}</p>
             }
-          </select>
-          @if (hasFieldError('client_id')) {
-            <p class="field-error">{{ getFieldError('client_id') }}</p>
-          }
-        </div>
+          </div>
 
-        <div class="actions field-full">
-          <button class="button" type="submit" [disabled]="isSaving() || form.invalid">
-            {{ isSaving() ? 'Guardando...' : editingId() ? 'Actualizar' : 'Crear solicitud' }}
-          </button>
-          <button class="button-ghost" type="button" (click)="resetForm()">Limpiar</button>
+          <div class="field field-full">
+            <label for="notes">Notas</label>
+            <textarea id="notes" formControlName="notes"></textarea>
+            <p class="field-hint">
+              Materiales y acabados se manejaran desde catalogo cuando esa seccion este lista.
+            </p>
+          </div>
+
+          <div class="actions field-full">
+            <button class="button" type="submit" [disabled]="isSavingQuote() || quoteForm.invalid">
+              {{ isSavingQuote() ? 'Guardando...' : 'Guardar cotizacion' }}
+            </button>
+            <button class="button-ghost" type="button" (click)="closeQuoteForm()">Cancelar</button>
+          </div>
+        </form>
+      } @else {
+        <div class="empty-state">
+          Selecciona una solicitud del listado para crear o editar su cotizacion.
         </div>
-      </form>
+      }
     </section>
 
     <section class="panel">
       <div class="page-title">
         <h2>Listado general</h2>
-        <p>Revisa el estado de cada solicitud y actualizala cuando sea necesario.</p>
+        <p>Las solicitudes nacen desde cliente. Admin solo revisa, actualiza y cotiza.</p>
       </div>
 
       @if (isLoading()) {
         <p class="muted">Cargando solicitudes...</p>
       } @else if (requests().length) {
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Titulo</th>
-                <th>Cliente</th>
-                <th>Tipo</th>
-                <th>Estado</th>
-                <th>Creada</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (request of requests(); track request.id) {
-                <tr>
-                  <td>
-                    <strong>{{ request.title }}</strong>
-                    <p class="muted">{{ request.description || 'Sin descripcion' }}</p>
-                  </td>
-                  <td>{{ requestClientName(request.client_id) }}</td>
-                  <td>{{ requestTypeLabels[request.request_type] }}</td>
-                  <td>
+        <div class="request-list">
+          @for (request of requests(); track request.id) {
+            <article class="request-card">
+              <div class="request-card-main">
+                <div class="page-title">
+                  <h3>{{ request.title }}</h3>
+                  <p>{{ request.description || 'Sin descripcion' }}</p>
+                </div>
+
+                <div class="request-meta">
+                  <span>{{ requestClientName(request.client_id) }}</span>
+                  <span>{{ requestTypeLabels[request.request_type] }}</span>
+                  <span>{{ request.created_at ? (request.created_at | date: 'mediumDate') : 'Sin fecha' }}</span>
+                </div>
+              </div>
+
+              <div class="request-card-side">
+                <div class="field request-status-field">
+                  <label [for]="'request_status_' + request.id">Estado</label>
+                  <select
+                    [id]="'request_status_' + request.id"
+                    [value]="request.status"
+                    [disabled]="isUpdatingRequest()"
+                    (change)="updateRequestStatus(request, $any($event.target).value)"
+                  >
+                    @for (status of requestStatuses; track status) {
+                      <option [value]="status">{{ requestStatusLabels[status] }}</option>
+                    }
+                  </select>
+                </div>
+
+                @if (quoteForRequest(request.id); as quote) {
+                  <div class="quote-summary">
                     <span
                       class="status-chip"
-                      [class.warn]="statusClass(request.status) === 'warn'"
-                      [class.danger]="statusClass(request.status) === 'danger'"
+                      [class.warn]="quoteStatusClass(quote.status) === 'warn'"
+                      [class.danger]="quoteStatusClass(quote.status) === 'danger'"
                     >
-                      {{ requestStatusLabels[request.status] }}
+                      {{ quoteStatusLabels[quote.status] }}
                     </span>
-                  </td>
-                  <td>{{ request.created_at ? (request.created_at | date: 'medium') : 'Sin fecha' }}</td>
-                  <td>
-                    <div class="actions">
-                      <button class="button-secondary" type="button" (click)="editRequest(request)">
-                        Editar
-                      </button>
-                      <button class="button-danger" type="button" (click)="deleteRequest(request)">
-                        Eliminar
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+                    <strong>{{ quote.price_total | currency: 'MXN' }}</strong>
+                  </div>
+                } @else {
+                  <span class="muted">Sin cotizacion</span>
+                }
+
+                <button class="button" type="button" (click)="openQuoteForm(request)">
+                  {{ quoteForRequest(request.id) ? 'Editar cotizacion' : 'Cotizar' }}
+                </button>
+              </div>
+            </article>
+          }
         </div>
       } @else {
         <div class="empty-state">No hay solicitudes registradas.</div>

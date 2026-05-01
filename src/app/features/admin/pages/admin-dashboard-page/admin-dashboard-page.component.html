@@ -1,4 +1,4 @@
-<section class="page-shell">
+<section class="page-shell admin-shell">
   <div class="page-header">
     <div class="page-title">
       <span class="eyebrow">Admin</span>
@@ -33,7 +33,12 @@
     </article>
 
     <article class="stat-card">
-      <span class="muted">Ventas acumuladas</span>
+      <span class="muted">Cotizaciones pendientes</span>
+      <strong>{{ pendingQuotes() }}</strong>
+    </article>
+
+    <article class="stat-card">
+      <span class="muted">Ventas sin cancelados</span>
       <strong>{{ totalSales() | currency: 'MXN' }}</strong>
     </article>
   </div>

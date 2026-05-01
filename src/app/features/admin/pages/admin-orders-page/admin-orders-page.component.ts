@@ -44,7 +44,8 @@ export class AdminOrdersPageComponent {
   readonly availableQuotes = computed(() =>
     this.quotes().filter((quote) => {
       const assignedOrder = this.orders().find((order) => order.quote_id === quote.id);
-      return !assignedOrder || assignedOrder.id === this.editingId();
+      const belongsToEditedOrder = assignedOrder?.id === this.editingId();
+      return (quote.status === 'ACCEPTED' && !assignedOrder) || belongsToEditedOrder;
     })
   );
   readonly validationMessages: Record<string, ValidationMessages> = {
@@ -149,6 +150,13 @@ export class AdminOrdersPageComponent {
   async submit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      return;
+    }
+
+    const selectedQuote = this.quoteById(this.form.controls.quote_id.getRawValue());
+
+    if (!this.editingId() && (!selectedQuote || selectedQuote.status !== 'ACCEPTED')) {
+      this.errorMessage.set('Solo puedes crear pedidos desde cotizaciones aceptadas.');
       return;
     }
 

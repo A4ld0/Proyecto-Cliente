@@ -1,0 +1,16 @@
+<section class="auth-shell">
+  <div class="panel auth-card">
+    <div class="page-title">
+      <span class="eyebrow">Acceso</span>
+      <h1>Validando cuenta</h1>
+      <p>Estamos completando el inicio de sesion con Google.</p>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert">{{ errorMessage() }}</div>
+      <a class="button-secondary" href="/login">Volver al login</a>
+    } @else {
+      <div class="notice">Un momento...</div>
+    }
+  </div>
+</section>

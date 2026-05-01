@@ -1,3 +1,80 @@
 :host {
   display: block;
 }
+
+.users-workspace {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(320px, 0.78fr) minmax(0, 1.22fr);
+}
+
+.identity-card {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.25rem;
+  margin: 1rem 0;
+  padding: 1rem;
+}
+
+.identity-card strong {
+  color: #ffffff;
+  font-size: 1.05rem;
+}
+
+.identity-card span {
+  color: var(--muted);
+}
+
+.user-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.user-card {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 1rem;
+}
+
+.user-card-active {
+  border-color: rgba(204, 243, 1, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(204, 243, 1, 0.18);
+}
+
+.user-card-main {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.user-card-main strong {
+  color: #ffffff;
+}
+
+.user-card-main > span {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.user-meta {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 950px) {
+  .users-workspace,
+  .user-card {
+    grid-template-columns: 1fr;
+  }
+}

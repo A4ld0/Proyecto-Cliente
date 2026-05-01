@@ -1,3 +1,35 @@
 :host {
   display: block;
 }
+
+.google-button {
+  width: 100%;
+}
+
+.google-mark {
+  align-items: center;
+  background: #ffffff;
+  border-radius: 999px;
+  color: #121212;
+  display: inline-flex;
+  font-weight: 800;
+  height: 1.45rem;
+  justify-content: center;
+  width: 1.45rem;
+}
+
+.login-separator {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.login-separator::before,
+.login-separator::after {
+  background: rgba(255, 255, 255, 0.12);
+  content: '';
+  flex: 1;
+  height: 1px;
+}

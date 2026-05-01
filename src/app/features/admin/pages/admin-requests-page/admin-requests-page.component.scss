@@ -1,3 +1,89 @@
 :host {
   display: block;
 }
+
+.requests-workspace {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(340px, 0.85fr) minmax(0, 1.15fr);
+}
+
+.quote-panel {
+  align-self: start;
+  position: sticky;
+  top: 7rem;
+}
+
+.request-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.request-card {
+  align-items: start;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.42fr);
+  padding: 1rem;
+}
+
+.request-card h3 {
+  color: #ffffff;
+  font-size: 1.05rem;
+}
+
+.request-card-main {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.request-meta {
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.request-meta span {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 0.35rem 0.6rem;
+}
+
+.request-card-side {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.request-status-field select {
+  min-height: 2.6rem;
+  padding-block: 0.65rem;
+}
+
+.quote-summary {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.quote-summary strong {
+  color: #ffffff;
+}
+
+@media (max-width: 1050px) {
+  .requests-workspace,
+  .request-card {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-panel {
+    position: static;
+  }
+}

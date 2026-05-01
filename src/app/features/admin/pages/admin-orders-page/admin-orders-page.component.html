@@ -1,4 +1,4 @@
-<section class="page-shell">
+<section class="page-shell admin-shell">
   <div class="page-header">
     <div class="page-title">
       <span class="eyebrow">Admin</span>
@@ -19,7 +19,7 @@
     <section class="panel">
       <div class="page-title">
         <h2>{{ editingId() ? 'Editar pedido' : 'Nuevo pedido' }}</h2>
-        <p>Relaciona cada pedido con una cotizacion valida para mantener el seguimiento claro.</p>
+        <p>Relaciona cada pedido con una cotizacion aceptada para mantener el seguimiento claro.</p>
       </div>
 
       <form class="form-grid" novalidate [formGroup]="form" (ngSubmit)="submit()">
@@ -40,6 +40,9 @@
           </select>
           @if (hasFieldError('quote_id')) {
             <p class="field-error">{{ getFieldError('quote_id') }}</p>
+          }
+          @if (!availableQuotes().length) {
+            <p class="field-hint">No hay cotizaciones aceptadas disponibles para crear pedidos.</p>
           }
         </div>
 

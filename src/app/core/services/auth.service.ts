@@ -15,6 +15,8 @@ export class AuthService {
   private readonly supabase = inject(SupabaseService);
   private readonly usersService = inject(UsersService);
   private readonly storageKey = 'printlab.session';
+  private refreshTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private refreshPromise: Promise<AppSession | null> | null = null;
 
   readonly session = signal<AppSession | null>(this.restoreSession());
   readonly currentUser = computed(() => this.session()?.user ?? null);
@@ -23,6 +25,8 @@ export class AuthService {
 
   constructor() {
     this.supabase.setAccessToken(this.session()?.accessToken ?? null);
+    this.scheduleTokenRefresh();
+    void this.refreshSessionIfNeeded();
   }
 
   async signIn(email: string, password: string): Promise<User> {
@@ -46,7 +50,66 @@ export class AuthService {
 
     this.persistSession({
       accessToken: response.access_token,
+      expiresAt: this.getExpiresAt(response),
       refreshToken: response.refresh_token,
+      user: profile
+    });
+
+    return profile;
+  }
+
+  signInWithGoogle(): void {
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    window.location.href = this.supabase.getOAuthUrl('google', redirectTo);
+  }
+
+  async completeOAuthSignIn(fragment: string): Promise<User> {
+    const params = new URLSearchParams(fragment.replace(/^#/, ''));
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token') ?? undefined;
+
+    if (!accessToken) {
+      throw new Error('Google no devolvio una sesion valida.');
+    }
+
+    this.supabase.setAccessToken(accessToken);
+
+    const authUser = (await firstValueFrom(
+      this.supabase.getAuthUser(accessToken)
+    )) as SupabaseAuthResponse['user'];
+
+    if (!authUser?.id) {
+      throw new Error('No fue posible validar la cuenta de Google.');
+    }
+
+    const email = authUser.email ?? '';
+    const fullName = authUser.user_metadata?.full_name ?? authUser.user_metadata?.name ?? email;
+    let profile =
+      (await firstValueFrom(this.usersService.getById(authUser.id))) ??
+      (email ? await firstValueFrom(this.usersService.getByEmail(email)) : null);
+
+    if (!profile) {
+      const [createdProfile] = await firstValueFrom(
+        this.usersService.upsert({
+          id: authUser.id,
+          full_name: fullName || 'Cliente',
+          email,
+          phone: null,
+          role: 'CLIENT',
+          is_active: true
+        })
+      );
+      profile = createdProfile ?? null;
+    }
+
+    if (!profile) {
+      throw new Error('No encontramos un perfil asociado a esta cuenta.');
+    }
+
+    this.persistSession({
+      accessToken,
+      expiresAt: this.getExpiresAtFromParams(params),
+      refreshToken,
       user: profile
     });
 
@@ -90,6 +153,7 @@ export class AuthService {
     if (response.access_token) {
       this.persistSession({
         accessToken: response.access_token,
+        expiresAt: this.getExpiresAt(response),
         refreshToken: response.refresh_token,
         user: profile
       });
@@ -113,6 +177,7 @@ export class AuthService {
 
     this.persistSession({
       accessToken: this.session()!.accessToken,
+      expiresAt: this.session()!.expiresAt,
       refreshToken: this.session()!.refreshToken,
       user: updatedUser
     });
@@ -120,7 +185,37 @@ export class AuthService {
     return updatedUser;
   }
 
-  async signOut(): Promise<void> {
+  async refreshSessionIfNeeded(force = false): Promise<AppSession | null> {
+    const currentSession = this.session();
+
+    if (!currentSession?.refreshToken) {
+      return currentSession;
+    }
+
+    const expiresAt = currentSession.expiresAt ?? 0;
+    const shouldRefresh = force || !expiresAt || Date.now() >= expiresAt - 60_000;
+
+    if (!shouldRefresh) {
+      return currentSession;
+    }
+
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.refreshPromise = this.refreshSession(currentSession)
+      .catch(() => {
+        this.clearSession();
+        return null;
+      })
+      .finally(() => {
+        this.refreshPromise = null;
+      });
+
+    return this.refreshPromise;
+  }
+
+  async signOut(redirectTo = '/landing'): Promise<void> {
     try {
       await firstValueFrom(this.supabase.signOut());
     } catch {
@@ -128,7 +223,7 @@ export class AuthService {
     }
 
     this.clearSession();
-    await this.router.navigateByUrl('/landing');
+    await this.router.navigateByUrl(redirectTo);
   }
 
   private restoreSession(): AppSession | null {
@@ -154,11 +249,82 @@ export class AuthService {
     this.session.set(session);
     this.supabase.setAccessToken(session.accessToken);
     localStorage.setItem(this.storageKey, JSON.stringify(session));
+    this.scheduleTokenRefresh();
   }
 
   private clearSession(): void {
     this.session.set(null);
     this.supabase.setAccessToken(null);
     localStorage.removeItem(this.storageKey);
+    this.clearRefreshTimer();
+  }
+
+  private async refreshSession(currentSession: AppSession): Promise<AppSession> {
+    const response = (await firstValueFrom(
+      this.supabase.refreshToken(currentSession.refreshToken!)
+    )) as SupabaseAuthResponse;
+
+    if (!response.access_token) {
+      throw new Error('No fue posible renovar la sesion.');
+    }
+
+    const refreshedSession: AppSession = {
+      accessToken: response.access_token,
+      expiresAt: this.getExpiresAt(response),
+      refreshToken: response.refresh_token ?? currentSession.refreshToken,
+      user: currentSession.user
+    };
+
+    this.persistSession(refreshedSession);
+    return refreshedSession;
+  }
+
+  private scheduleTokenRefresh(): void {
+    this.clearRefreshTimer();
+
+    const currentSession = this.session();
+
+    if (!currentSession?.refreshToken || !currentSession.expiresAt) {
+      return;
+    }
+
+    const refreshIn = Math.max(currentSession.expiresAt - Date.now() - 60_000, 5_000);
+    this.refreshTimeoutId = setTimeout(() => {
+      void this.refreshSessionIfNeeded(true);
+    }, refreshIn);
+  }
+
+  private clearRefreshTimer(): void {
+    if (this.refreshTimeoutId) {
+      clearTimeout(this.refreshTimeoutId);
+      this.refreshTimeoutId = null;
+    }
+  }
+
+  private getExpiresAt(response: SupabaseAuthResponse): number | undefined {
+    if (response.expires_at) {
+      return response.expires_at * 1000;
+    }
+
+    if (response.expires_in) {
+      return Date.now() + response.expires_in * 1000;
+    }
+
+    return undefined;
+  }
+
+  private getExpiresAtFromParams(params: URLSearchParams): number | undefined {
+    const expiresAt = Number(params.get('expires_at'));
+    const expiresIn = Number(params.get('expires_in'));
+
+    if (expiresAt) {
+      return expiresAt * 1000;
+    }
+
+    if (expiresIn) {
+      return Date.now() + expiresIn * 1000;
+    }
+
+    return undefined;
   }
 }

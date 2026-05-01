@@ -5,8 +5,8 @@ import { environment } from '../../../environments/environment';
 
 export interface PostgrestFilter {
   column: string;
-  operator?: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike';
-  value: string | number | boolean;
+  operator?: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike' | 'in';
+  value: string | number | boolean | string[];
 }
 
 export interface PostgrestOrder {
@@ -39,6 +39,10 @@ export class SupabaseService {
     this.accessToken = token;
   }
 
+  getAccessToken(): string | null {
+    return this.accessToken;
+  }
+
   private get headers(): HttpHeaders {
     return new HttpHeaders({
       apikey: this.supabaseAnonKey,
@@ -51,7 +55,11 @@ export class SupabaseService {
     let params = new HttpParams().set('select', query?.select ?? '*');
 
     for (const filter of query?.filters ?? []) {
-      params = params.append(filter.column, `${filter.operator ?? 'eq'}.${filter.value}`);
+      if (filter.operator === 'in' && Array.isArray(filter.value)) {
+        params = params.append(filter.column, `in.(${filter.value.join(',')})`);
+      } else {
+        params = params.append(filter.column, `${filter.operator ?? 'eq'}.${filter.value}`);
+      }
     }
 
     if (query?.order) {
@@ -114,6 +122,29 @@ export class SupabaseService {
       { email, password },
       { headers: this.headers }
     );
+  }
+
+  refreshToken(refreshToken: string): Observable<unknown> {
+    return this.http.post(
+      `${this.supabaseUrl}/auth/v1/token?grant_type=refresh_token`,
+      { refresh_token: refreshToken },
+      { headers: this.headers }
+    );
+  }
+
+  getAuthUser(accessToken: string): Observable<unknown> {
+    return this.http.get(`${this.supabaseUrl}/auth/v1/user`, {
+      headers: this.headers.set('Authorization', `Bearer ${accessToken}`)
+    });
+  }
+
+  getOAuthUrl(provider: 'google', redirectTo: string): string {
+    const params = new URLSearchParams({
+      provider,
+      redirect_to: redirectTo
+    });
+
+    return `${this.supabaseUrl}/auth/v1/authorize?${params.toString()}`;
   }
 
   signUp(email: string, password: string, data?: Record<string, unknown>): Observable<unknown> {

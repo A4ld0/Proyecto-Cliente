@@ -51,11 +51,14 @@ export class ClientOrdersPageComponent {
     this.errorMessage.set('');
 
     try {
-      const [orders, requests, quotes] = await Promise.all([
+      const [orders, requests] = await Promise.all([
         firstValueFrom(this.ordersService.list({ clientId: user.id })),
-        firstValueFrom(this.requestsService.list({ clientId: user.id })),
-        firstValueFrom(this.quotesService.list())
+        firstValueFrom(this.requestsService.list({ clientId: user.id }))
       ]);
+      const requestIds = requests.map((request) => request.id);
+      const quotes = requestIds.length
+        ? await firstValueFrom(this.quotesService.list({ requestIds }))
+        : [];
 
       this.orders.set(orders);
       this.requests.set(requests);

@@ -43,8 +43,13 @@ export class AdminDashboardPageComponent {
   readonly activeRequests = computed(
     () => this.requests().filter((request) => !['CLOSED', 'CANCELED'].includes(request.status)).length
   );
+  readonly pendingQuotes = computed(() =>
+    this.quotes().filter((quote) => ['DRAFT', 'SENT'].includes(quote.status)).length
+  );
   readonly totalSales = computed(() =>
-    this.orders().reduce((total, order) => total + this.quoteTotal(order.quote_id), 0)
+    this.orders()
+      .filter((order) => order.status !== 'CANCELED')
+      .reduce((total, order) => total + this.quoteTotal(order.quote_id), 0)
   );
 
   constructor() {

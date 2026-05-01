@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { USER_ROLE_LABELS, USER_ROLES } from '../../../../core/constants/printlab.constants';
@@ -25,6 +25,9 @@ export class AdminUsersPageComponent {
 
   readonly currentUser = this.authService.currentUser;
   readonly users = signal<User[]>([]);
+  readonly selectedUser = computed(() =>
+    this.users().find((user) => user.id === this.editingId()) ?? null
+  );
   readonly roles = USER_ROLES;
   readonly roleLabels = USER_ROLE_LABELS;
   readonly isLoading = signal(true);
@@ -33,15 +36,6 @@ export class AdminUsersPageComponent {
   readonly errorMessage = signal('');
   readonly successMessage = signal('');
   readonly validationMessages: Record<string, ValidationMessages> = {
-    full_name: {
-      required: 'Ingresa el nombre.',
-      minlength: 'El nombre debe tener al menos 3 caracteres.',
-      maxlength: 'El nombre no debe exceder 80 caracteres.'
-    },
-    email: {
-      required: 'Ingresa el correo.',
-      email: 'Escribe un correo valido.'
-    },
     role: {
       required: 'Selecciona un rol.'
     },
@@ -55,14 +49,6 @@ export class AdminUsersPageComponent {
   };
 
   readonly form = new FormGroup({
-    full_name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(80)]
-    }),
-    email: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.email]
-    }),
     role: new FormControl('CLIENT', { nonNullable: true, validators: [Validators.required] }),
     phone: new FormControl('', {
       nonNullable: true,
@@ -98,8 +84,6 @@ export class AdminUsersPageComponent {
     this.editingId.set(user.id);
     this.successMessage.set('');
     this.form.patchValue({
-      full_name: user.full_name,
-      email: user.email ?? '',
       role: user.role,
       phone: user.phone ?? '',
       is_active: user.is_active
@@ -132,9 +116,17 @@ export class AdminUsersPageComponent {
     this.successMessage.set('');
 
     const rawValue = this.form.getRawValue();
+    const selectedUser = this.selectedUser();
+
+    if (!selectedUser) {
+      this.errorMessage.set('Selecciona un perfil antes de guardar cambios.');
+      this.isSaving.set(false);
+      return;
+    }
+
     const payload: UserPayload = {
-      full_name: rawValue.full_name,
-      email: rawValue.email,
+      full_name: selectedUser.full_name,
+      email: selectedUser.email,
       role: rawValue.role as UserRole,
       phone: rawValue.phone || null,
       is_active: rawValue.is_active

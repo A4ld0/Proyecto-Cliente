@@ -377,6 +377,7 @@ textarea.ng-invalid.ng-touched {
   }
 }
 
+.admin-shell,
 .client-shell,
 .auth-shell {
   --bg: #010101;
@@ -396,22 +397,26 @@ textarea.ng-invalid.ng-touched {
   padding-block: 0.4rem 2.5rem;
 }
 
+.content:has(.admin-shell),
 .content:has(.client-shell),
 .content:has(.auth-shell) {
   background: #010101;
 }
 
+.admin-shell .page-header,
 .client-shell .page-header,
 .auth-shell .page-header {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding-bottom: 0.35rem;
 }
 
+.admin-shell .eyebrow,
 .client-shell .eyebrow,
 .auth-shell .eyebrow {
   color: var(--brand);
 }
 
+.admin-shell .page-title h1,
 .client-shell .page-title h1,
 .auth-shell .page-title h1 {
   color: #ffffff;
@@ -423,11 +428,14 @@ textarea.ng-invalid.ng-touched {
   text-transform: uppercase;
 }
 
+.admin-shell .page-title h2,
 .client-shell .page-title h2,
 .auth-shell .page-title h2 {
   color: #ffffff;
 }
 
+.admin-shell .page-title p,
+.admin-shell .muted,
 .client-shell .page-title p,
 .client-shell .muted,
 .auth-shell .page-title p,
@@ -435,6 +443,7 @@ textarea.ng-invalid.ng-touched {
   color: var(--muted);
 }
 
+.admin-shell .panel,
 .client-shell .panel,
 .auth-shell .panel {
   background: var(--surface);
@@ -442,16 +451,21 @@ textarea.ng-invalid.ng-touched {
   box-shadow: var(--shadow);
 }
 
+.admin-shell .stat-card,
 .client-shell .stat-card {
   background: rgba(255, 255, 255, 0.045);
   border-color: rgba(255, 255, 255, 0.13);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
+.admin-shell .stat-card strong,
 .client-shell .stat-card strong {
   color: #ffffff;
 }
 
+.admin-shell input,
+.admin-shell select,
+.admin-shell textarea,
 .client-shell input,
 .client-shell select,
 .client-shell textarea,
@@ -463,6 +477,15 @@ textarea.ng-invalid.ng-touched {
   color: #ffffff;
 }
 
+.admin-shell option,
+.client-shell option,
+.auth-shell option {
+  background: #121212;
+  color: #ffffff;
+}
+
+.admin-shell input::placeholder,
+.admin-shell textarea::placeholder,
 .client-shell input::placeholder,
 .client-shell textarea::placeholder,
 .auth-shell input::placeholder,
@@ -470,6 +493,9 @@ textarea.ng-invalid.ng-touched {
   color: rgba(255, 255, 255, 0.38);
 }
 
+.admin-shell input:focus,
+.admin-shell select:focus,
+.admin-shell textarea:focus,
 .client-shell input:focus,
 .client-shell select:focus,
 .client-shell textarea:focus,
@@ -480,6 +506,8 @@ textarea.ng-invalid.ng-touched {
   box-shadow: 0 0 0 4px rgba(204, 243, 1, 0.13);
 }
 
+.admin-shell input[readonly],
+.admin-shell input:disabled,
 .client-shell input[readonly],
 .client-shell input:disabled,
 .auth-shell input[readonly],
@@ -488,11 +516,18 @@ textarea.ng-invalid.ng-touched {
   color: rgba(255, 255, 255, 0.58);
 }
 
+.admin-shell .field label,
 .client-shell .field label,
 .auth-shell .field label {
   color: rgba(255, 255, 255, 0.72);
 }
 
+.admin-shell .field-invalid input,
+.admin-shell .field-invalid select,
+.admin-shell .field-invalid textarea,
+.admin-shell input.ng-invalid.ng-touched,
+.admin-shell select.ng-invalid.ng-touched,
+.admin-shell textarea.ng-invalid.ng-touched,
 .client-shell .field-invalid input,
 .client-shell .field-invalid select,
 .client-shell .field-invalid textarea,
@@ -510,6 +545,7 @@ textarea.ng-invalid.ng-touched {
   box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.1);
 }
 
+.admin-shell .button,
 .client-shell .button,
 .auth-shell .button {
   background: var(--brand);
@@ -517,6 +553,7 @@ textarea.ng-invalid.ng-touched {
   color: #010101;
 }
 
+.admin-shell .button-secondary,
 .client-shell .button-secondary,
 .auth-shell .button-secondary {
   background: rgba(255, 255, 255, 0.07);
@@ -524,6 +561,7 @@ textarea.ng-invalid.ng-touched {
   color: #ffffff;
 }
 
+.admin-shell .button-ghost,
 .client-shell .button-ghost,
 .auth-shell .button-ghost {
   background: transparent;
@@ -531,6 +569,7 @@ textarea.ng-invalid.ng-touched {
   color: var(--muted);
 }
 
+.admin-shell .button-danger,
 .client-shell .button-danger,
 .auth-shell .button-danger {
   background: rgba(255, 107, 107, 0.1);
@@ -538,51 +577,62 @@ textarea.ng-invalid.ng-touched {
   color: #ff8585;
 }
 
+.admin-shell .link-inline,
 .client-shell .link-inline,
 .auth-shell .link-inline {
   color: var(--brand);
 }
 
+.admin-shell .table-wrap,
 .client-shell .table-wrap {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 1rem;
 }
 
+.admin-shell th,
+.admin-shell td,
 .client-shell th,
 .client-shell td {
   border-bottom-color: rgba(255, 255, 255, 0.09);
 }
 
+.admin-shell th,
 .client-shell th {
   color: rgba(255, 255, 255, 0.52);
 }
 
+.admin-shell tbody tr,
 .client-shell tbody tr {
   transition: background 140ms ease;
 }
 
+.admin-shell tbody tr:hover,
 .client-shell tbody tr:hover {
   background: rgba(255, 255, 255, 0.035);
 }
 
+.admin-shell .status-chip,
 .client-shell .status-chip {
   background: rgba(204, 243, 1, 0.12);
   border: 1px solid rgba(204, 243, 1, 0.22);
   color: #eaff67;
 }
 
+.admin-shell .status-chip.warn,
 .client-shell .status-chip.warn {
   background: rgba(237, 199, 41, 0.12);
   border-color: rgba(237, 199, 41, 0.22);
   color: #edc729;
 }
 
+.admin-shell .status-chip.danger,
 .client-shell .status-chip.danger {
   background: rgba(255, 107, 107, 0.11);
   border-color: rgba(255, 107, 107, 0.22);
   color: #ff8585;
 }
 
+.admin-shell .notice,
 .client-shell .notice,
 .auth-shell .notice {
   background: rgba(255, 255, 255, 0.055);
@@ -590,12 +640,14 @@ textarea.ng-invalid.ng-touched {
   color: #ffffff;
 }
 
+.admin-shell .notice p,
 .client-shell .notice p,
 .auth-shell .notice p {
   color: var(--muted);
   margin-top: 0.25rem;
 }
 
+.admin-shell .alert,
 .client-shell .alert,
 .auth-shell .alert {
   background: rgba(255, 107, 107, 0.1);
@@ -603,6 +655,7 @@ textarea.ng-invalid.ng-touched {
   color: #ffb4b4;
 }
 
+.admin-shell .empty-state,
 .client-shell .empty-state,
 .auth-shell .empty-state {
   background: rgba(255, 255, 255, 0.045);

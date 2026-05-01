@@ -16,6 +16,13 @@
       <div class="alert">{{ errorMessage() }}</div>
     }
 
+    <button class="button-secondary google-button" type="button" (click)="signInWithGoogle()">
+      <span class="google-mark">G</span>
+      Crear cuenta con Google
+    </button>
+
+    <div class="register-separator"><span>o</span></div>
+
     <form class="form-grid" novalidate [formGroup]="form" (ngSubmit)="submit()">
       <div class="field" [class.field-invalid]="hasFieldError('full_name')">
         <label for="full_name">Nombre</label>

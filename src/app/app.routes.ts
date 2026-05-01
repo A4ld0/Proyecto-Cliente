@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { adminGuard, clientGuard } from './core/guards';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 
 export const routes: Routes = [
@@ -33,7 +34,15 @@ export const routes: Routes = [
           )
       },
       {
+        path: 'auth/callback',
+        loadComponent: () =>
+          import('./features/auth/pages/auth-callback-page/auth-callback-page.component').then(
+            (m) => m.AuthCallbackPageComponent
+          )
+      },
+      {
         path: 'client/dashboard',
+        canActivate: [clientGuard],
         loadComponent: () =>
           import('./features/client/pages/client-dashboard-page/client-dashboard-page.component').then(
             (m) => m.ClientDashboardPageComponent
@@ -41,6 +50,7 @@ export const routes: Routes = [
       },
       {
         path: 'client/requests',
+        canActivate: [clientGuard],
         loadComponent: () =>
           import('./features/client/pages/client-requests-page/client-requests-page.component').then(
             (m) => m.ClientRequestsPageComponent
@@ -48,6 +58,7 @@ export const routes: Routes = [
       },
       {
         path: 'client/orders',
+        canActivate: [clientGuard],
         loadComponent: () =>
           import('./features/client/pages/client-orders-page/client-orders-page.component').then(
             (m) => m.ClientOrdersPageComponent
@@ -55,6 +66,7 @@ export const routes: Routes = [
       },
       {
         path: 'client/profile',
+        canActivate: [clientGuard],
         loadComponent: () =>
           import('./features/client/pages/client-profile-page/client-profile-page.component').then(
             (m) => m.ClientProfilePageComponent
@@ -62,6 +74,7 @@ export const routes: Routes = [
       },
       {
         path: 'admin/dashboard',
+        canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/admin/pages/admin-dashboard-page/admin-dashboard-page.component').then(
             (m) => m.AdminDashboardPageComponent
@@ -69,6 +82,7 @@ export const routes: Routes = [
       },
       {
         path: 'admin/requests',
+        canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/admin/pages/admin-requests-page/admin-requests-page.component').then(
             (m) => m.AdminRequestsPageComponent
@@ -76,6 +90,7 @@ export const routes: Routes = [
       },
       {
         path: 'admin/orders',
+        canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/admin/pages/admin-orders-page/admin-orders-page.component').then(
             (m) => m.AdminOrdersPageComponent
@@ -83,6 +98,7 @@ export const routes: Routes = [
       },
       {
         path: 'admin/catalog',
+        canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/admin/pages/admin-catalog-page/admin-catalog-page.component').then(
             (m) => m.AdminCatalogPageComponent
@@ -90,6 +106,7 @@ export const routes: Routes = [
       },
       {
         path: 'admin/users',
+        canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/admin/pages/admin-users-page/admin-users-page.component').then(
             (m) => m.AdminUsersPageComponent

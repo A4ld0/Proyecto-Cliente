@@ -1,9 +1,9 @@
-<section class="page-shell">
+<section class="page-shell admin-shell">
   <div class="page-header">
     <div class="page-title">
       <span class="eyebrow">Admin</span>
       <h1>Usuarios</h1>
-      <p>Administra perfiles, roles y datos de contacto del equipo y los clientes.</p>
+      <p>Administra roles, estado y datos de contacto de perfiles existentes.</p>
     </div>
   </div>
 
@@ -15,126 +15,96 @@
     <div class="notice">{{ successMessage() }}</div>
   }
 
-  <div class="split-layout">
+  <div class="users-workspace">
     <section class="panel">
       <div class="page-title">
         <h2>Editar perfil</h2>
-        <p>Los perfiles nacen desde Supabase Auth. Aqui puedes ajustar datos, rol y estado.</p>
+        <p>Nombre y correo se conservan desde Auth. Aqui ajustas rol, telefono y estado.</p>
       </div>
 
-      <form class="form-grid" novalidate [formGroup]="form" (ngSubmit)="submit()">
-        <div class="field" [class.field-invalid]="hasFieldError('full_name')">
-          <label for="full_name">Nombre</label>
-          <input
-            id="full_name"
-            type="text"
-            formControlName="full_name"
-            [attr.aria-invalid]="hasFieldError('full_name')"
-          />
-          @if (hasFieldError('full_name')) {
-            <p class="field-error">{{ getFieldError('full_name') }}</p>
-          }
+      @if (selectedUser(); as user) {
+        <div class="identity-card">
+          <strong>{{ user.full_name }}</strong>
+          <span>{{ user.email || 'Sin correo' }}</span>
         </div>
 
-        <div class="field" [class.field-invalid]="hasFieldError('email')">
-          <label for="email">Correo</label>
-          <input
-            id="email"
-            type="email"
-            formControlName="email"
-            [attr.aria-invalid]="hasFieldError('email')"
-          />
-          @if (hasFieldError('email')) {
-            <p class="field-error">{{ getFieldError('email') }}</p>
-          }
-        </div>
-
-        <div class="field" [class.field-invalid]="hasFieldError('role')">
-          <label for="role">Rol</label>
-          <select id="role" formControlName="role" [attr.aria-invalid]="hasFieldError('role')">
-            @for (role of roles; track role) {
-              <option [value]="role">{{ roleLabels[role] }}</option>
+        <form class="form-grid" novalidate [formGroup]="form" (ngSubmit)="submit()">
+          <div class="field" [class.field-invalid]="hasFieldError('role')">
+            <label for="role">Rol</label>
+            <select id="role" formControlName="role" [attr.aria-invalid]="hasFieldError('role')">
+              @for (role of roles; track role) {
+                <option [value]="role">{{ roleLabels[role] }}</option>
+              }
+            </select>
+            @if (hasFieldError('role')) {
+              <p class="field-error">{{ getFieldError('role') }}</p>
             }
-          </select>
-          @if (hasFieldError('role')) {
-            <p class="field-error">{{ getFieldError('role') }}</p>
-          }
-        </div>
+          </div>
 
-        <div class="field" [class.field-invalid]="hasFieldError('phone')">
-          <label for="phone">Telefono</label>
-          <input
-            id="phone"
-            type="text"
-            formControlName="phone"
-            [attr.aria-invalid]="hasFieldError('phone')"
-          />
-          @if (hasFieldError('phone')) {
-            <p class="field-error">{{ getFieldError('phone') }}</p>
-          }
-        </div>
+          <div class="field" [class.field-invalid]="hasFieldError('phone')">
+            <label for="phone">Telefono</label>
+            <input
+              id="phone"
+              type="text"
+              formControlName="phone"
+              [attr.aria-invalid]="hasFieldError('phone')"
+            />
+            @if (hasFieldError('phone')) {
+              <p class="field-error">{{ getFieldError('phone') }}</p>
+            }
+          </div>
 
-        <div class="field" [class.field-invalid]="hasFieldError('is_active')">
-          <label for="is_active">Estado</label>
-          <select
-            id="is_active"
-            formControlName="is_active"
-            [attr.aria-invalid]="hasFieldError('is_active')"
-          >
-            <option [ngValue]="true">Activo</option>
-            <option [ngValue]="false">Inactivo</option>
-          </select>
-        </div>
+          <div class="field" [class.field-invalid]="hasFieldError('is_active')">
+            <label for="is_active">Estado</label>
+            <select
+              id="is_active"
+              formControlName="is_active"
+              [attr.aria-invalid]="hasFieldError('is_active')"
+            >
+              <option [ngValue]="true">Activo</option>
+              <option [ngValue]="false">Inactivo</option>
+            </select>
+          </div>
 
-        <div class="actions field-full">
-          <button class="button" type="submit" [disabled]="isSaving() || form.invalid">
-            {{ isSaving() ? 'Guardando...' : 'Guardar cambios' }}
-          </button>
-          <button class="button-ghost" type="button" (click)="resetForm()">Limpiar</button>
-        </div>
-      </form>
+          <div class="actions field-full">
+            <button class="button" type="submit" [disabled]="isSaving() || form.invalid">
+              {{ isSaving() ? 'Guardando...' : 'Guardar cambios' }}
+            </button>
+            <button class="button-ghost" type="button" (click)="resetForm()">Limpiar</button>
+          </div>
+        </form>
+      } @else {
+        <div class="empty-state">Selecciona un usuario para editarlo.</div>
+      }
     </section>
 
     <section class="panel">
       <div class="page-title">
         <h2>Listado general</h2>
-        <p>Consulta y ajusta los perfiles registrados en el sistema.</p>
+        <p>Consulta perfiles registrados sin desplazamiento horizontal.</p>
       </div>
 
       @if (isLoading()) {
         <p class="muted">Cargando usuarios...</p>
       } @else if (users().length) {
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Correo</th>
-                <th>Rol</th>
-                <th>Telefono</th>
-                <th>Estado</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (user of users(); track user.id) {
-                <tr>
-                  <td>{{ user.full_name }}</td>
-                  <td>{{ user.email || 'Sin correo' }}</td>
-                  <td><span class="status-chip">{{ roleLabels[user.role] }}</span></td>
-                  <td>{{ user.phone || 'Sin telefono' }}</td>
-                  <td>{{ user.is_active ? 'Activo' : 'Inactivo' }}</td>
-                  <td>
-                    <div class="actions">
-                      <button class="button-secondary" type="button" (click)="editUser(user)">
-                        Editar
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+        <div class="user-list">
+          @for (user of users(); track user.id) {
+            <article class="user-card" [class.user-card-active]="editingId() === user.id">
+              <div class="user-card-main">
+                <strong>{{ user.full_name }}</strong>
+                <span>{{ user.email || 'Sin correo' }}</span>
+                <div class="user-meta">
+                  <span class="status-chip">{{ roleLabels[user.role] }}</span>
+                  <span>{{ user.phone || 'Sin telefono' }}</span>
+                  <span>{{ user.is_active ? 'Activo' : 'Inactivo' }}</span>
+                </div>
+              </div>
+
+              <button class="button-secondary" type="button" (click)="editUser(user)">
+                Editar
+              </button>
+            </article>
+          }
         </div>
       } @else {
         <div class="empty-state">No hay perfiles registrados.</div>

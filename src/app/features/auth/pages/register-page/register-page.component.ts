@@ -91,6 +91,11 @@ export class RegisterPageComponent {
     }
   }
 
+  signInWithGoogle(): void {
+    this.errorMessage.set('');
+    this.authService.signInWithGoogle();
+  }
+
   hasFieldError(controlName: string): boolean {
     return isFieldInvalid(this.form, controlName);
   }
