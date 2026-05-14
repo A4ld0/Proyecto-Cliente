@@ -21,7 +21,9 @@ export class AuthCallbackPageComponent {
 
   private async completeSignIn(): Promise<void> {
     try {
-      const user = await this.authService.completeOAuthSignIn(window.location.hash);
+      const user = await this.authService.completeOAuthSignIn(
+        window.location.hash || window.location.search
+      );
       await this.router.navigateByUrl(
         user.role === 'ADMIN' ? '/admin/dashboard' : '/client/dashboard'
       );

@@ -59,12 +59,12 @@ export class AuthService {
   }
 
   signInWithGoogle(): void {
-    const redirectTo = `${window.location.origin}/#/auth/callback`;
+    const redirectTo = `${window.location.origin}/auth/callback`;
     window.location.href = this.supabase.getOAuthUrl('google', redirectTo);
   }
 
-  async completeOAuthSignIn(fragment: string): Promise<User> {
-    const params = new URLSearchParams(fragment.replace(/^#/, ''));
+  async completeOAuthSignIn(fragmentOrQuery: string): Promise<User> {
+    const params = new URLSearchParams(fragmentOrQuery.replace(/^[#?]/, ''));
     const accessToken = params.get('access_token');
     const refreshToken = params.get('refresh_token') ?? undefined;
 
