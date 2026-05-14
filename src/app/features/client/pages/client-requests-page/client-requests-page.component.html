@@ -66,18 +66,6 @@
           }
         </div>
 
-        <div class="field" [class.field-invalid]="hasFieldError('status')">
-          <label for="status">Estado</label>
-          <select id="status" formControlName="status" [attr.aria-invalid]="hasFieldError('status')">
-            @for (status of requestStatuses; track status) {
-              <option [value]="status">{{ requestStatusLabels[status] }}</option>
-            }
-          </select>
-          @if (hasFieldError('status')) {
-            <p class="field-error">{{ getFieldError('status') }}</p>
-          }
-        </div>
-
         <div class="actions field-full">
           <button class="button" type="submit" [disabled]="isSaving() || form.invalid">
             {{ isSaving() ? 'Guardando...' : editingId() ? 'Actualizar' : 'Crear solicitud' }}

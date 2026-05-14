@@ -3,7 +3,6 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import {
-  REQUEST_STATUSES,
   REQUEST_STATUS_LABELS,
   REQUEST_TYPE_LABELS,
   REQUEST_TYPES
@@ -35,7 +34,6 @@ export class ClientRequestsPageComponent {
 
   readonly currentUser = this.authService.currentUser;
   readonly requests = signal<PrintRequest[]>([]);
-  readonly requestStatuses = REQUEST_STATUSES;
   readonly requestStatusLabels = REQUEST_STATUS_LABELS;
   readonly requestTypes = REQUEST_TYPES;
   readonly requestTypeLabels = REQUEST_TYPE_LABELS;
@@ -57,9 +55,6 @@ export class ClientRequestsPageComponent {
     },
     request_type: {
       required: 'Selecciona el tipo de solicitud.'
-    },
-    status: {
-      required: 'Selecciona el estado.'
     }
   };
 
@@ -75,8 +70,7 @@ export class ClientRequestsPageComponent {
     request_type: new FormControl('GENERAL_3D', {
       nonNullable: true,
       validators: [Validators.required]
-    }),
-    status: new FormControl('PENDING', { nonNullable: true, validators: [Validators.required] })
+    })
   });
 
   constructor() {
@@ -111,8 +105,7 @@ export class ClientRequestsPageComponent {
     this.form.patchValue({
       title: request.title,
       description: request.description ?? '',
-      request_type: request.request_type,
-      status: request.status
+      request_type: request.request_type
     });
   }
 
@@ -121,8 +114,7 @@ export class ClientRequestsPageComponent {
     this.form.reset({
       title: '',
       description: '',
-      request_type: 'GENERAL_3D',
-      status: 'PENDING'
+      request_type: 'GENERAL_3D'
     });
   }
 
@@ -144,11 +136,10 @@ export class ClientRequestsPageComponent {
     this.successMessage.set('');
 
     const rawValue = this.form.getRawValue();
-    const payload: PrintRequestPayload = {
+    const payload = {
       title: rawValue.title,
       description: rawValue.description || null,
       request_type: rawValue.request_type as RequestType,
-      status: rawValue.status as RequestStatus,
       client_id: user.id
     };
 
@@ -157,7 +148,11 @@ export class ClientRequestsPageComponent {
         await firstValueFrom(this.requestsService.update(this.editingId()!, payload));
         this.successMessage.set('La solicitud se actualizo correctamente.');
       } else {
-        await firstValueFrom(this.requestsService.create(payload));
+        const createPayload: PrintRequestPayload = {
+          ...payload,
+          status: 'PENDING'
+        };
+        await firstValueFrom(this.requestsService.create(createPayload));
         this.successMessage.set('Tu solicitud se registro correctamente.');
       }
 
