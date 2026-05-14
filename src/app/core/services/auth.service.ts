@@ -65,8 +65,20 @@ export class AuthService {
 
   async completeOAuthSignIn(fragmentOrQuery: string): Promise<User> {
     const params = new URLSearchParams(fragmentOrQuery.replace(/^[#?]/, ''));
+    const errorDescription = params.get('error_description') ?? params.get('error');
+    const authorizationCode = params.get('code');
     const accessToken = params.get('access_token');
     const refreshToken = params.get('refresh_token') ?? undefined;
+
+    if (errorDescription) {
+      throw new Error(errorDescription);
+    }
+
+    if (authorizationCode) {
+      throw new Error(
+        'Supabase devolvio un codigo OAuth, pero esta app espera tokens en el callback. Revisa que el flujo configurado sea implicit o usa el cliente oficial de Supabase para PKCE.'
+      );
+    }
 
     if (!accessToken) {
       throw new Error('Google no devolvio una sesion valida.');

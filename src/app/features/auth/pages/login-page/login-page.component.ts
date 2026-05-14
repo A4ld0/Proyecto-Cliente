@@ -45,6 +45,15 @@ export class LoginPageComponent {
     })
   });
 
+  constructor() {
+    const oauthError = sessionStorage.getItem('printlab.oauthError');
+
+    if (oauthError) {
+      this.errorMessage.set(oauthError);
+      sessionStorage.removeItem('printlab.oauthError');
+    }
+  }
+
   async submit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
