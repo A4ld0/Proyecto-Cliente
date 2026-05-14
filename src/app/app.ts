@@ -14,7 +14,17 @@ export class App {
   private readonly router = inject(Router);
 
   constructor() {
+    this.normalizeLegacyHashRoute();
     void this.completeRootOAuthRedirect();
+  }
+
+  private normalizeLegacyHashRoute(): void {
+    if (!window.location.hash.startsWith('#/')) {
+      return;
+    }
+
+    const legacyPath = window.location.hash.slice(1);
+    window.history.replaceState({}, document.title, legacyPath || '/landing');
   }
 
   private async completeRootOAuthRedirect(): Promise<void> {
