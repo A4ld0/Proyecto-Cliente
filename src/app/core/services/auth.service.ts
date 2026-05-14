@@ -59,7 +59,7 @@ export class AuthService {
   }
 
   signInWithGoogle(): void {
-    const redirectTo = `${window.location.origin}/auth/callback`;
+    const redirectTo = `${window.location.origin}/#/auth/callback`;
     window.location.href = this.supabase.getOAuthUrl('google', redirectTo);
   }
 
