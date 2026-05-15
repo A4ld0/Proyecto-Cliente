@@ -1,0 +1,212 @@
+<section class="catalog-shell">
+  <section class="catalog-hero">
+    <div class="catalog-title">
+      <span class="eyebrow">Catalogo PrintLab 3D</span>
+      <h1>Productos y materiales para fabricar tus ideas</h1>
+      <p>
+        Explora opciones listas para cotizar, compara materiales y filtra por color o presupuesto
+        antes de enviar tu solicitud.
+      </p>
+    </div>
+
+    <div class="catalog-summary" aria-label="Resumen del catalogo">
+      <span>{{ products.length }} productos</span>
+      <span>{{ materials.length }} materiales</span>
+      <span>Desde $45 MXN</span>
+    </div>
+  </section>
+
+  <section class="catalog-layout">
+    <aside class="filters-panel" aria-label="Filtros del catalogo">
+      <div class="filters-heading">
+        <div>
+          <span class="eyebrow">Filtros</span>
+          <h2>Encuentra una opcion</h2>
+        </div>
+
+        @if (activeFilterCount() > 0) {
+          <button type="button" class="clear-button" (click)="clearFilters()">Limpiar</button>
+        }
+      </div>
+
+      <label class="filter-field">
+        <span>Material</span>
+        <select
+          [value]="selectedMaterial()"
+          (change)="updateMaterial($any($event.target).value)"
+        >
+          @for (material of materialOptions(); track material) {
+            <option [value]="material">{{ material }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="filter-field">
+        <span>Color</span>
+        <select [value]="selectedColor()" (change)="updateColor($any($event.target).value)">
+          @for (color of colorOptions(); track color) {
+            <option [value]="color">{{ color }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="filter-field">
+        <span>Precio maximo: ${{ maxPrice() }} MXN</span>
+        <input
+          type="range"
+          min="50"
+          max="300"
+          step="10"
+          [value]="maxPrice()"
+          (input)="updateMaxPrice($any($event.target).value)"
+        />
+      </label>
+
+      <div class="selected-filters">
+        <span>{{ selectedMaterial() }}</span>
+        <span>{{ selectedColor() }}</span>
+        <span>Hasta ${{ maxPrice() }}</span>
+      </div>
+    </aside>
+
+    <div class="catalog-results">
+      <div class="results-bar">
+        <p>{{ filteredProducts().length }} resultados disponibles</p>
+        <button type="button" (click)="quoteCart()">Cotizar carrito</button>
+      </div>
+
+      @if (cartMessage()) {
+        <div class="cart-notice">{{ cartMessage() }}</div>
+      }
+
+      @if (filteredProducts().length > 0) {
+        <div class="products-grid">
+          @for (product of filteredProducts(); track product.name) {
+            <article class="product-card">
+              <div class="product-media">
+                <img [src]="product.image" [alt]="product.name" />
+              </div>
+
+              <div class="product-body">
+                <div class="product-heading">
+                  <span>{{ product.category }}</span>
+                  <h2>{{ product.name }}</h2>
+                </div>
+
+                <p>{{ product.description }}</p>
+
+                <div class="chip-row">
+                  @for (material of product.materials; track material) {
+                    <span>{{ material }}</span>
+                  }
+                </div>
+
+                <div class="product-meta">
+                  <span>Desde <strong>${{ product.priceFrom }}</strong></span>
+                  <span>{{ product.delivery }}</span>
+                </div>
+
+                <div class="product-selection">
+                  <span>Se agregara: {{ getSelectedProductMaterial(product) }} / {{ getSelectedProductColor(product) }}</span>
+                  <button type="button" (click)="addToCart(product)">Agregar al carrito</button>
+                </div>
+
+                <div class="tag-list">
+                  @for (tag of product.tags; track tag) {
+                    <span>{{ tag }}</span>
+                  }
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="empty-catalog">
+          <h2>No hay productos con esos filtros</h2>
+          <p>Prueba con otro material, color o sube el precio maximo.</p>
+          <button type="button" (click)="clearFilters()">Restablecer filtros</button>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="cart-section" aria-label="Carrito de cotizacion">
+    <div class="section-heading">
+      <span class="eyebrow">Carrito</span>
+      <h2>Cotizacion desde catalogo</h2>
+    </div>
+
+    @if (!isAuthenticated()) {
+      <div class="locked-cart">
+        <h3>Inicia sesion para usar el carrito</h3>
+        <p>El carrito se conecta con tus solicitudes para que el equipo pueda revisar y cotizar.</p>
+        <a routerLink="/login">Iniciar sesion</a>
+      </div>
+    } @else if (cartItems().length) {
+      <div class="cart-panel">
+        <div class="cart-items">
+          @for (item of cartItems(); track item.name + item.material + item.color; let index = $index) {
+            <article class="cart-item">
+              <div>
+                <h3>{{ item.name }}</h3>
+                <p>{{ item.quantity }} x {{ item.material }} / {{ item.color }}</p>
+              </div>
+
+              <div class="cart-item-actions">
+                <span>${{ item.priceFrom * item.quantity }} MXN</span>
+                <button type="button" aria-label="Quitar producto" (click)="removeCartItem(index)">
+                  Quitar
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+
+        <footer class="cart-footer">
+          <div>
+            <span>{{ cartItemCount() }} productos</span>
+            <strong>Desde ${{ cartEstimatedTotal() }} MXN</strong>
+          </div>
+
+          <div class="cart-actions">
+            <button type="button" class="cart-secondary" (click)="clearCart()">Vaciar</button>
+            <button type="button" class="cart-primary" (click)="quoteCart()">
+              Enviar a solicitudes
+            </button>
+          </div>
+        </footer>
+      </div>
+    } @else {
+      <div class="locked-cart">
+        <h3>Tu carrito esta vacio</h3>
+        <p>Agrega productos del catalogo para convertirlos en una solicitud de cotizacion.</p>
+      </div>
+    }
+  </section>
+
+  <section class="materials-section">
+    <div class="section-heading">
+      <span class="eyebrow">Materiales</span>
+      <h2>Como elegir el material correcto</h2>
+    </div>
+
+    <div class="materials-grid">
+      @for (material of materials; track material.name) {
+        <article class="material-card">
+          <h3>{{ material.name }}</h3>
+          <p>{{ material.description }}</p>
+          <dl>
+            <div>
+              <dt>Ideal para</dt>
+              <dd>{{ material.bestFor }}</dd>
+            </div>
+            <div>
+              <dt>Acabado</dt>
+              <dd>{{ material.finish }}</dd>
+            </div>
+          </dl>
+        </article>
+      }
+    </div>
+  </section>
+</section>

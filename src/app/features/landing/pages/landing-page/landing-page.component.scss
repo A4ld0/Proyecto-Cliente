@@ -157,14 +157,177 @@
 .hero-visual {
   display: flex;
   justify-content: flex-end;
-  pointer-events: none;
 }
 
-.hero-visual img {
-  filter: drop-shadow(0 45px 80px rgba(0, 0, 0, 0.6));
-  max-height: 82dvh;
-  max-width: min(680px, 100%);
+.portfolio-carousel {
+  display: grid;
+  gap: 1rem;
+  max-width: 610px;
   width: 100%;
+}
+
+.portfolio-stage {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.015)),
+    radial-gradient(circle at 50% 55%, rgba(204, 243, 1, 0.16), transparent 44%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.34);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: min(620px, 72dvh);
+  overflow: hidden;
+  padding: 1.25rem;
+  position: relative;
+}
+
+.portfolio-stage::before {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 72px 72px;
+  content: '';
+  inset: 0;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.7), transparent 78%);
+  opacity: 0.28;
+  pointer-events: none;
+  position: absolute;
+}
+
+.portfolio-category {
+  align-self: start;
+  color: #ccf301;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  margin: 0;
+  position: relative;
+  text-transform: uppercase;
+  z-index: 1;
+}
+
+.portfolio-category,
+.portfolio-stage img,
+.portfolio-copy {
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
+}
+
+.portfolio-stage.is-changing .portfolio-category,
+.portfolio-stage.is-changing img,
+.portfolio-stage.is-changing .portfolio-copy {
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+}
+
+.portfolio-stage img {
+  align-self: center;
+  aspect-ratio: 1 / 1;
+  filter: drop-shadow(0 45px 80px rgba(0, 0, 0, 0.6));
+  height: min(470px, 54dvh);
+  justify-self: center;
+  max-width: min(520px, 100%);
+  object-fit: contain;
+  position: relative;
+  width: 100%;
+  z-index: 1;
+}
+
+.portfolio-copy {
+  align-self: end;
+  display: grid;
+  gap: 0.45rem;
+  position: relative;
+  z-index: 1;
+}
+
+.portfolio-copy h2 {
+  color: #ffffff;
+  font-size: clamp(1.5rem, 3vw, 2.35rem);
+  line-height: 1;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.portfolio-copy p {
+  color: #c8c8c4;
+  line-height: 1.7;
+  margin: 0;
+  max-width: 29rem;
+}
+
+.portfolio-specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.portfolio-specs span {
+  background: rgba(204, 243, 1, 0.1);
+  border: 1px solid rgba(204, 243, 1, 0.2);
+  border-radius: 8px;
+  color: #f2ffc0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.55rem 0.7rem;
+}
+
+.portfolio-controls {
+  align-items: center;
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+}
+
+.carousel-button {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 2rem;
+  height: 44px;
+  justify-content: center;
+  line-height: 1;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease;
+  width: 44px;
+}
+
+.carousel-button:hover {
+  background: rgba(204, 243, 1, 0.12);
+  border-color: rgba(204, 243, 1, 0.38);
+  transform: translateY(-1px);
+}
+
+.carousel-dots {
+  align-items: center;
+  display: flex;
+  gap: 0.55rem;
+  justify-content: center;
+}
+
+.carousel-dots button {
+  background: rgba(255, 255, 255, 0.28);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  height: 8px;
+  padding: 0;
+  transition:
+    background 150ms ease,
+    width 150ms ease;
+  width: 8px;
+}
+
+.carousel-dots button.active {
+  background: #ccf301;
+  width: 28px;
 }
 
 .system-alert {
@@ -195,9 +358,17 @@
     justify-content: center;
   }
 
-  .hero-visual img {
-    max-height: none;
-    max-width: 380px;
+  .portfolio-carousel {
+    max-width: 520px;
+  }
+
+  .portfolio-stage {
+    min-height: 520px;
+  }
+
+  .portfolio-stage img {
+    height: 330px;
+    max-width: 390px;
   }
 }
 
@@ -221,5 +392,18 @@
   .cta-primary,
   .cta-secondary {
     width: 100%;
+  }
+
+  .portfolio-stage {
+    min-height: 460px;
+    padding: 1rem;
+  }
+
+  .portfolio-stage img {
+    height: 280px;
+  }
+
+  .portfolio-copy h2 {
+    font-size: 1.45rem;
   }
 }

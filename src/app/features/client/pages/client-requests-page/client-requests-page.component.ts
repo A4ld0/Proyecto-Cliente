@@ -7,7 +7,7 @@ import {
   REQUEST_TYPE_LABELS,
   REQUEST_TYPES
 } from '../../../../core/constants/printlab.constants';
-import { AuthService, RequestsService } from '../../../../core/services';
+import { AuthService, CartService, RequestsService } from '../../../../core/services';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import {
   getFieldErrorMessage,
@@ -30,9 +30,13 @@ import {
 })
 export class ClientRequestsPageComponent {
   private readonly authService = inject(AuthService);
+  private readonly cartService = inject(CartService);
   private readonly requestsService = inject(RequestsService);
 
   readonly currentUser = this.authService.currentUser;
+  readonly cartItems = this.cartService.items;
+  readonly cartItemCount = this.cartService.itemCount;
+  readonly cartEstimatedTotal = this.cartService.estimatedTotal;
   readonly requests = signal<PrintRequest[]>([]);
   readonly requestStatusLabels = REQUEST_STATUS_LABELS;
   readonly requestTypes = REQUEST_TYPES;
@@ -74,6 +78,7 @@ export class ClientRequestsPageComponent {
   });
 
   constructor() {
+    this.prefillFromCart();
     void this.loadRequests();
   }
 
@@ -154,6 +159,7 @@ export class ClientRequestsPageComponent {
         };
         await firstValueFrom(this.requestsService.create(createPayload));
         this.successMessage.set('Tu solicitud se registro correctamente.');
+        this.cartService.clear();
       }
 
       this.resetForm();
@@ -205,5 +211,22 @@ export class ClientRequestsPageComponent {
 
   getFieldError(controlName: string): string {
     return getFieldErrorMessage(this.form, controlName, this.validationMessages[controlName] ?? {});
+  }
+
+  prefillFromCart(): void {
+    if (!this.cartItems().length || this.editingId()) {
+      return;
+    }
+
+    this.form.patchValue({
+      title: this.cartService.buildRequestTitle(),
+      description: this.cartService.buildRequestDescription(),
+      request_type: 'GENERAL_3D'
+    });
+  }
+
+  clearCartDraft(): void {
+    this.cartService.clear();
+    this.resetForm();
   }
 }

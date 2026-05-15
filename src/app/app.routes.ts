@@ -20,6 +20,13 @@ export const routes: Routes = [
           )
       },
       {
+        path: 'catalogo',
+        loadComponent: () =>
+          import('./features/catalog/pages/catalog-page/catalog-page.component').then(
+            (m) => m.CatalogPageComponent
+          )
+      },
+      {
         path: 'login',
         loadComponent: () =>
           import('./features/auth/pages/login-page/login-page.component').then(

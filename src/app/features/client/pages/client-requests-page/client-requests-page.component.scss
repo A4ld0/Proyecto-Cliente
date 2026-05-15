@@ -12,6 +12,27 @@
   min-width: 0;
 }
 
+.cart-request-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.cart-request-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.cart-request-list span {
+  background: rgba(204, 243, 1, 0.11);
+  border: 1px solid rgba(204, 243, 1, 0.22);
+  border-radius: 999px;
+  color: #f1ffc0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.45rem 0.7rem;
+}
+
 .requests-list-panel {
   display: grid;
   gap: 1.1rem;

@@ -15,6 +15,33 @@
     <div class="notice">{{ successMessage() }}</div>
   }
 
+  @if (cartItems().length) {
+    <section class="panel cart-request-panel">
+      <div class="page-title">
+        <h2>Carrito listo para cotizar</h2>
+        <p>
+          {{ cartItemCount() }} productos agregados desde el catalogo. Total estimado desde
+          ${{ cartEstimatedTotal() }} MXN.
+        </p>
+      </div>
+
+      <div class="cart-request-list">
+        @for (item of cartItems(); track item.name + item.material + item.color) {
+          <span>{{ item.quantity }} x {{ item.name }} / {{ item.material }} / {{ item.color }}</span>
+        }
+      </div>
+
+      <div class="actions">
+        <button class="button-secondary" type="button" (click)="prefillFromCart()">
+          Usar datos en la solicitud
+        </button>
+        <button class="button-ghost" type="button" (click)="clearCartDraft()">
+          Vaciar carrito
+        </button>
+      </div>
+    </section>
+  }
+
   <div class="split-layout requests-layout">
     <section class="panel request-form-panel">
       <div class="page-title">

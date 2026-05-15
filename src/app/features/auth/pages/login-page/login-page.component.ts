@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import {
@@ -18,6 +18,7 @@ import {
 })
 export class LoginPageComponent {
   private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   readonly isConfigured = this.authService.isConfigured;
@@ -69,8 +70,10 @@ export class LoginPageComponent {
         this.form.controls.password.getRawValue()
       );
 
+      const redirectTo = this.route.snapshot.queryParamMap.get('redirectTo');
+      const fallbackUrl = user.role === 'ADMIN' ? '/admin/dashboard' : '/client/dashboard';
       await this.router.navigateByUrl(
-        user.role === 'ADMIN' ? '/admin/dashboard' : '/client/dashboard'
+        redirectTo?.startsWith('/') ? redirectTo : fallbackUrl
       );
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'No pudimos iniciar tu sesion.'));

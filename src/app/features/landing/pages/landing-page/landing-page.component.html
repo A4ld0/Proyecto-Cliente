@@ -30,8 +30,60 @@
       </div>
     </div>
 
-    <div class="hero-visual" aria-hidden="true">
-      <img src="assets/landing/hero-model.png" alt="" />
+    <div class="hero-visual">
+      <div class="portfolio-carousel" aria-label="Portafolio de trabajos 3D">
+        <div class="portfolio-stage" [class.is-changing]="isPortfolioChanging()">
+          <p class="portfolio-category">{{ activePortfolioItem().category }}</p>
+
+          <img
+            [src]="activePortfolioItem().image"
+            [alt]="activePortfolioItem().title"
+          />
+
+          <div class="portfolio-copy">
+            <h2>{{ activePortfolioItem().title }}</h2>
+            <p>{{ activePortfolioItem().description }}</p>
+          </div>
+        </div>
+
+        <div class="portfolio-specs">
+          @for (spec of activePortfolioItem().specs; track spec) {
+            <span>{{ spec }}</span>
+          }
+        </div>
+
+        <div class="portfolio-controls">
+          <button
+            class="carousel-button"
+            type="button"
+            aria-label="Proyecto anterior"
+            (click)="previousPortfolioItem()"
+          >
+            &#8249;
+          </button>
+
+          <div class="carousel-dots" aria-label="Seleccionar proyecto">
+            @for (item of portfolioItems; track item.title; let index = $index) {
+              <button
+                type="button"
+                [class.active]="index === activePortfolioIndex()"
+                [attr.aria-label]="'Ver ' + item.title"
+                [attr.aria-current]="index === activePortfolioIndex() ? 'true' : null"
+                (click)="selectPortfolioItem(index)"
+              ></button>
+            }
+          </div>
+
+          <button
+            class="carousel-button"
+            type="button"
+            aria-label="Proyecto siguiente"
+            (click)="nextPortfolioItem()"
+          >
+            &#8250;
+          </button>
+        </div>
+      </div>
     </div>
 
   </section>
