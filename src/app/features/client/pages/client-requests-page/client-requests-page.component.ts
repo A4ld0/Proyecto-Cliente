@@ -32,6 +32,8 @@ export class ClientRequestsPageComponent {
   private readonly authService = inject(AuthService);
   private readonly cartService = inject(CartService);
   private readonly requestsService = inject(RequestsService);
+  private readonly allowedAttachmentTypes = ['image/png', 'image/jpeg', 'image/webp', 'model/stl'];
+  private readonly maxAttachmentSize = 20 * 1024 * 1024;
 
   readonly currentUser = this.authService.currentUser;
   readonly cartItems = this.cartService.items;
@@ -43,6 +45,8 @@ export class ClientRequestsPageComponent {
   readonly requestTypeLabels = REQUEST_TYPE_LABELS;
   readonly isLoading = signal(true);
   readonly isSaving = signal(false);
+  readonly selectedAttachment = signal<File | null>(null);
+  readonly selectedAttachmentPreview = signal('');
   readonly editingId = signal<string | null>(null);
   readonly errorMessage = signal('');
   readonly successMessage = signal('');
@@ -107,6 +111,10 @@ export class ClientRequestsPageComponent {
   editRequest(request: PrintRequest): void {
     this.editingId.set(request.id);
     this.successMessage.set('');
+    this.selectedAttachment.set(null);
+    this.selectedAttachmentPreview.set(
+      request.attachment_kind === 'IMAGE' ? request.attachment_url ?? '' : ''
+    );
     this.form.patchValue({
       title: request.title,
       description: request.description ?? '',
@@ -116,11 +124,43 @@ export class ClientRequestsPageComponent {
 
   resetForm(): void {
     this.editingId.set(null);
+    this.selectedAttachment.set(null);
+    this.selectedAttachmentPreview.set('');
     this.form.reset({
       title: '',
       description: '',
       request_type: 'GENERAL_3D'
     });
+  }
+
+  onAttachmentSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    if (!file) {
+      return;
+    }
+
+    const isStl = file.name.toLowerCase().endsWith('.stl');
+    const isAllowedType = this.allowedAttachmentTypes.includes(file.type) || isStl;
+
+    if (!isAllowedType) {
+      this.errorMessage.set('Sube una imagen PNG, JPG, WEBP o un archivo STL.');
+      input.value = '';
+      return;
+    }
+
+    if (file.size > this.maxAttachmentSize) {
+      this.errorMessage.set('El archivo no debe pesar mas de 20 MB.');
+      input.value = '';
+      return;
+    }
+
+    this.selectedAttachment.set(file);
+    this.selectedAttachmentPreview.set(file.type.startsWith('image/') ? URL.createObjectURL(file) : '');
   }
 
   async submit(): Promise<void> {
@@ -150,14 +190,23 @@ export class ClientRequestsPageComponent {
 
     try {
       if (this.editingId()) {
-        await firstValueFrom(this.requestsService.update(this.editingId()!, payload));
+        const attachmentPayload = await this.buildAttachmentPayload(this.editingId()!);
+        await firstValueFrom(
+          this.requestsService.update(this.editingId()!, { ...payload, ...attachmentPayload })
+        );
         this.successMessage.set('La solicitud se actualizo correctamente.');
       } else {
         const createPayload: PrintRequestPayload = {
           ...payload,
           status: 'PENDING'
         };
-        await firstValueFrom(this.requestsService.create(createPayload));
+        const [createdRequest] = await firstValueFrom(this.requestsService.create(createPayload));
+
+        if (createdRequest && this.selectedAttachment()) {
+          const attachmentPayload = await this.buildAttachmentPayload(createdRequest.id);
+          await firstValueFrom(this.requestsService.update(createdRequest.id, attachmentPayload));
+        }
+
         this.successMessage.set('Tu solicitud se registro correctamente.');
         this.cartService.clear();
       }
@@ -211,6 +260,28 @@ export class ClientRequestsPageComponent {
 
   getFieldError(controlName: string): string {
     return getFieldErrorMessage(this.form, controlName, this.validationMessages[controlName] ?? {});
+  }
+
+  attachmentKind(file: File): 'IMAGE' | 'STL' {
+    return file.name.toLowerCase().endsWith('.stl') ? 'STL' : 'IMAGE';
+  }
+
+  private async buildAttachmentPayload(requestId: string): Promise<Partial<PrintRequestPayload>> {
+    const file = this.selectedAttachment();
+
+    if (!file) {
+      return {};
+    }
+
+    const upload = this.requestsService.uploadAttachment(requestId, file);
+    await firstValueFrom(upload.request);
+
+    return {
+      attachment_url: `${upload.url}?v=${Date.now()}`,
+      attachment_name: file.name,
+      attachment_type: file.type || 'model/stl',
+      attachment_kind: this.attachmentKind(file)
+    };
   }
 
   prefillFromCart(): void {

@@ -100,6 +100,56 @@
   gap: 0.6rem;
 }
 
+.attachment-field input[type='file'] {
+  padding: 0.75rem;
+}
+
+.attachment-preview,
+.request-attachment {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 0.9rem;
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+  padding: 0.75rem;
+}
+
+.attachment-preview img,
+.request-attachment img,
+.stl-file {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 0.7rem;
+  height: 72px;
+  object-fit: cover;
+  width: 72px;
+}
+
+.attachment-preview span,
+.stl-file {
+  align-items: center;
+  color: #ccf301;
+  display: inline-flex;
+  font-weight: 900;
+  justify-content: center;
+}
+
+.attachment-preview p,
+.request-attachment a {
+  color: #ffffff;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.request-attachment {
+  margin-top: 0;
+}
+
+.request-attachment a {
+  text-decoration: none;
+}
+
 .request-card__chips {
   justify-content: flex-end;
 }

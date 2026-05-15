@@ -111,8 +111,28 @@
                 <div class="request-meta">
                   <span>{{ requestClientName(request.client_id) }}</span>
                   <span>{{ requestTypeLabels[request.request_type] }}</span>
+                  @if (request.attachment_url) {
+                    <span>{{ request.attachment_kind === 'STL' ? 'Archivo STL' : 'Imagen adjunta' }}</span>
+                  }
                   <span>{{ request.created_at ? (request.created_at | date: 'mediumDate') : 'Sin fecha' }}</span>
                 </div>
+
+                @if (request.attachment_url) {
+                  <div class="admin-attachment">
+                    @if (request.attachment_kind === 'IMAGE') {
+                      <img [src]="request.attachment_url" [alt]="request.attachment_name || request.title" />
+                    } @else {
+                      <div class="admin-stl-file">STL</div>
+                    }
+
+                    <div>
+                      <strong>{{ request.attachment_name || 'Archivo adjunto' }}</strong>
+                      <a [href]="request.attachment_url" target="_blank" rel="noopener">
+                        Abrir archivo
+                      </a>
+                    </div>
+                  </div>
+                }
               </div>
 
               <div class="request-card-side">

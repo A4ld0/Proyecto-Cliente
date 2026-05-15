@@ -93,6 +93,33 @@
           }
         </div>
 
+        <div class="field field-full attachment-field">
+          <label for="attachment">Archivo de referencia o STL</label>
+          <input
+            id="attachment"
+            type="file"
+            accept="image/png,image/jpeg,image/webp,.stl,model/stl"
+            (change)="onAttachmentSelected($event)"
+          />
+          <p class="field-hint">Puedes subir PNG, JPG, WEBP o STL. Maximo 20 MB.</p>
+
+          @if (selectedAttachment(); as file) {
+            <div class="attachment-preview">
+              @if (selectedAttachmentPreview()) {
+                <img [src]="selectedAttachmentPreview()" alt="Vista previa del archivo" />
+              } @else {
+                <span>STL</span>
+              }
+              <p>{{ file.name }}</p>
+            </div>
+          } @else if (selectedAttachmentPreview()) {
+            <div class="attachment-preview">
+              <img [src]="selectedAttachmentPreview()" alt="Archivo actual de la solicitud" />
+              <p>Archivo actual</p>
+            </div>
+          }
+        </div>
+
         <div class="actions field-full">
           <button class="button" type="submit" [disabled]="isSaving() || form.invalid">
             {{ isSaving() ? 'Guardando...' : editingId() ? 'Actualizar' : 'Crear solicitud' }}
@@ -123,6 +150,9 @@
 
                 <div class="request-card__chips" aria-label="Detalles de la solicitud">
                   <span class="request-type-chip">{{ requestTypeLabels[request.request_type] }}</span>
+                  @if (request.attachment_url) {
+                    <span class="request-type-chip">{{ request.attachment_kind === 'STL' ? 'STL' : 'Imagen' }}</span>
+                  }
                   <span
                     class="status-chip"
                     [class.warn]="statusClass(request.status) === 'warn'"
@@ -132,6 +162,19 @@
                   </span>
                 </div>
               </div>
+
+              @if (request.attachment_url) {
+                <div class="request-attachment">
+                  @if (request.attachment_kind === 'IMAGE') {
+                    <img [src]="request.attachment_url" [alt]="request.attachment_name || request.title" />
+                  } @else {
+                    <div class="stl-file">STL</div>
+                  }
+                  <a [href]="request.attachment_url" target="_blank" rel="noopener">
+                    {{ request.attachment_name || 'Abrir archivo' }}
+                  </a>
+                </div>
+              }
 
               <footer class="request-card__footer">
                 <span class="request-date">
