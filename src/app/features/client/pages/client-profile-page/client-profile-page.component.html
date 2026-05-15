@@ -17,6 +17,41 @@
 
   <div class="split-layout">
     <section class="panel">
+      <div class="avatar-panel">
+        <div class="avatar-preview">
+          @if (avatarPreviewUrl()) {
+            <img [src]="avatarPreviewUrl()" alt="Foto de perfil" />
+          } @else {
+            <span>{{ getInitials() || 'PL' }}</span>
+          }
+        </div>
+
+        <div class="avatar-actions">
+          <div class="page-title">
+            <h2>Foto de perfil</h2>
+            <p>Usa una imagen JPG, PNG o WEBP de maximo 2 MB.</p>
+          </div>
+
+          <label class="avatar-file-button" for="avatar">Seleccionar imagen</label>
+          <input
+            id="avatar"
+            class="avatar-file-input"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            (change)="onAvatarSelected($event)"
+          />
+
+          <button
+            class="button-secondary"
+            type="button"
+            [disabled]="!selectedAvatarFile() || isUploadingAvatar()"
+            (click)="uploadAvatar()"
+          >
+            {{ isUploadingAvatar() ? 'Subiendo...' : 'Guardar foto' }}
+          </button>
+        </div>
+      </div>
+
       <form class="form-grid" novalidate [formGroup]="form" (ngSubmit)="submit()">
         <div class="field" [class.field-invalid]="hasFieldError('full_name')">
           <label for="full_name">Nombre</label>

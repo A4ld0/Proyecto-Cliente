@@ -92,6 +92,30 @@
   gap: 0.75rem;
 }
 
+.avatar-mini {
+  align-items: center;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(204, 243, 1, 0.25), transparent 58%),
+    rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: #ccf301;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 900;
+  height: 42px;
+  justify-content: center;
+  overflow: hidden;
+  width: 42px;
+}
+
+.avatar-mini img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
 .identity {
   display: grid;
   gap: 0.1rem;

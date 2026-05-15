@@ -4,6 +4,7 @@ export interface User {
   id: string;
   full_name: string;
   email?: string | null;
+  avatar_url?: string | null;
   role: UserRole;
   phone?: string | null;
   is_active: boolean;
@@ -14,6 +15,7 @@ export interface User {
 export interface UserPayload {
   full_name: string;
   email?: string | null;
+  avatar_url?: string | null;
   phone?: string | null;
   role: UserRole;
   is_active?: boolean;

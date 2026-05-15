@@ -46,6 +46,13 @@
 
   <div class="session-box">
     @if (currentUser(); as user) {
+      <span class="avatar-mini" aria-hidden="true">
+        @if (user.avatar_url) {
+          <img [src]="user.avatar_url" alt="" />
+        } @else {
+          {{ getInitials(user.full_name) || 'PL' }}
+        }
+      </span>
       <div class="identity">
         <strong>{{ user.full_name }}</strong>
         <span>{{ roleLabels[user.role] }}</span>

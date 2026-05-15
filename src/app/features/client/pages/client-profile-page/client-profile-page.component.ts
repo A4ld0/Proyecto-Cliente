@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, effect, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AuthService } from '../../../../core/services';
+import { firstValueFrom } from 'rxjs';
+import { AuthService, SupabaseService } from '../../../../core/services';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import {
   getFieldErrorMessage,
@@ -15,11 +16,19 @@ import {
   styleUrl: './client-profile-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ClientProfilePageComponent {
+export class ClientProfilePageComponent implements OnDestroy {
   private readonly authService = inject(AuthService);
+  private readonly supabaseService = inject(SupabaseService);
+  private readonly avatarBucket = 'avatars';
+  private readonly allowedAvatarTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  private readonly maxAvatarSize = 2 * 1024 * 1024;
+  private previewObjectUrl: string | null = null;
 
   readonly currentUser = this.authService.currentUser;
   readonly isSaving = signal(false);
+  readonly isUploadingAvatar = signal(false);
+  readonly selectedAvatarFile = signal<File | null>(null);
+  readonly avatarPreviewUrl = signal('');
   readonly errorMessage = signal('');
   readonly successMessage = signal('');
   readonly validationMessages: Record<string, ValidationMessages> = {
@@ -53,6 +62,10 @@ export class ClientProfilePageComponent {
       const user = this.currentUser();
 
       if (user) {
+        if (!this.selectedAvatarFile()) {
+          this.avatarPreviewUrl.set(user.avatar_url ?? '');
+        }
+
         this.form.patchValue({
           full_name: user.full_name,
           email: user.email ?? '',
@@ -62,6 +75,10 @@ export class ClientProfilePageComponent {
         });
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.revokePreviewObjectUrl();
   }
 
   async submit(): Promise<void> {
@@ -88,11 +105,102 @@ export class ClientProfilePageComponent {
     }
   }
 
+  onAvatarSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    if (!file) {
+      return;
+    }
+
+    if (!this.allowedAvatarTypes.includes(file.type)) {
+      this.errorMessage.set('Usa una imagen JPG, PNG o WEBP.');
+      input.value = '';
+      return;
+    }
+
+    if (file.size > this.maxAvatarSize) {
+      this.errorMessage.set('La imagen no debe pesar mas de 2 MB.');
+      input.value = '';
+      return;
+    }
+
+    this.selectedAvatarFile.set(file);
+    this.revokePreviewObjectUrl();
+    this.previewObjectUrl = URL.createObjectURL(file);
+    this.avatarPreviewUrl.set(this.previewObjectUrl);
+  }
+
+  async uploadAvatar(): Promise<void> {
+    const user = this.currentUser();
+    const file = this.selectedAvatarFile();
+
+    if (!user || !file) {
+      return;
+    }
+
+    this.isUploadingAvatar.set(true);
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    const extension = this.getAvatarExtension(file);
+    const path = `${user.id}/profile.${extension}`;
+
+    try {
+      await firstValueFrom(this.supabaseService.uploadStorageObject(this.avatarBucket, path, file));
+      const avatarUrl = `${this.supabaseService.getPublicStorageUrl(this.avatarBucket, path)}?v=${Date.now()}`;
+
+      await this.authService.updateCurrentUser({ avatar_url: avatarUrl });
+      this.selectedAvatarFile.set(null);
+      this.revokePreviewObjectUrl();
+      this.avatarPreviewUrl.set(avatarUrl);
+      this.successMessage.set('Tu foto de perfil se actualizo correctamente.');
+    } catch (error) {
+      this.errorMessage.set(getApiErrorMessage(error, 'No pudimos subir tu foto de perfil.'));
+    } finally {
+      this.isUploadingAvatar.set(false);
+    }
+  }
+
+  getInitials(): string {
+    const name = this.currentUser()?.full_name ?? '';
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('');
+  }
+
   hasFieldError(controlName: string): boolean {
     return isFieldInvalid(this.form, controlName);
   }
 
   getFieldError(controlName: string): string {
     return getFieldErrorMessage(this.form, controlName, this.validationMessages[controlName] ?? {});
+  }
+
+  private getAvatarExtension(file: File): string {
+    if (file.type === 'image/png') {
+      return 'png';
+    }
+
+    if (file.type === 'image/webp') {
+      return 'webp';
+    }
+
+    return 'jpg';
+  }
+
+  private revokePreviewObjectUrl(): void {
+    if (!this.previewObjectUrl) {
+      return;
+    }
+
+    URL.revokeObjectURL(this.previewObjectUrl);
+    this.previewObjectUrl = null;
   }
 }

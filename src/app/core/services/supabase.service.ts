@@ -116,6 +116,25 @@ export class SupabaseService {
     });
   }
 
+  uploadStorageObject(bucket: string, path: string, file: File): Observable<unknown> {
+    const headers = new HttpHeaders({
+      apikey: this.supabaseAnonKey,
+      Authorization: `Bearer ${this.accessToken ?? this.supabaseAnonKey}`,
+      'Content-Type': file.type,
+      'x-upsert': 'true'
+    });
+
+    return this.http.put(
+      `${this.supabaseUrl}/storage/v1/object/${bucket}/${path}`,
+      file,
+      { headers }
+    );
+  }
+
+  getPublicStorageUrl(bucket: string, path: string): string {
+    return `${this.supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
+  }
+
   signIn(email: string, password: string): Observable<unknown> {
     return this.http.post(
       `${this.supabaseUrl}/auth/v1/token?grant_type=password`,
