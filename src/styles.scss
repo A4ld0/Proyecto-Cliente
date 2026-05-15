@@ -379,7 +379,7 @@ textarea.ng-invalid.ng-touched {
 
 @media (max-width: 640px) {
   .page-shell {
-    gap: 1rem;
+    gap: 0.85rem;
     width: 100%;
   }
 
@@ -395,11 +395,12 @@ textarea.ng-invalid.ng-touched {
   .admin-shell .page-title h1,
   .client-shell .page-title h1,
   .auth-shell .page-title h1 {
-    font-size: 2.25rem;
+    font-size: 1.95rem;
+    letter-spacing: 0.02em;
   }
 
   .page-title h2 {
-    font-size: 1.45rem;
+    font-size: 1.22rem;
   }
 
   .page-title p {
@@ -408,8 +409,13 @@ textarea.ng-invalid.ng-touched {
   }
 
   .panel {
-    border-radius: 1rem;
-    padding: 1rem;
+    border-radius: 0.85rem;
+    padding: 0.85rem;
+  }
+
+  .panel > .page-title p,
+  .auth-card > .page-title p {
+    display: none;
   }
 
   .cards-grid {
@@ -417,7 +423,7 @@ textarea.ng-invalid.ng-touched {
   }
 
   .stat-card strong {
-    font-size: 1.55rem;
+    font-size: 1.35rem;
   }
 
   input,
@@ -443,13 +449,21 @@ textarea.ng-invalid.ng-touched {
   .alert,
   .empty-state {
     border-radius: 0.9rem;
+    font-size: 0.9rem;
+    padding: 0.8rem;
   }
 
   .admin-shell,
   .client-shell,
   .auth-shell {
     min-height: auto;
-    padding-block: 0 2rem;
+    padding-block: 0 1.5rem;
+  }
+
+  .admin-shell .page-header,
+  .client-shell .page-header,
+  .auth-shell .page-header {
+    padding-bottom: 0.75rem;
   }
 }
 
