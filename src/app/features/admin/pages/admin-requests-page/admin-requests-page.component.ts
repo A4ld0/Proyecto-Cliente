@@ -5,7 +5,6 @@ import { firstValueFrom } from 'rxjs';
 import {
   QUOTE_STATUS_LABELS,
   QUOTE_STATUSES,
-  REQUEST_STATUSES,
   REQUEST_STATUS_LABELS,
   REQUEST_TYPE_LABELS
 } from '../../../../core/constants/printlab.constants';
@@ -44,13 +43,11 @@ export class AdminRequestsPageComponent {
   readonly quotingRequest = computed(() =>
     this.requests().find((request) => request.id === this.quotingRequestId())
   );
-  readonly requestStatuses = REQUEST_STATUSES;
   readonly requestStatusLabels = REQUEST_STATUS_LABELS;
   readonly requestTypeLabels = REQUEST_TYPE_LABELS;
   readonly quoteStatuses = QUOTE_STATUSES;
   readonly quoteStatusLabels = QUOTE_STATUS_LABELS;
   readonly isLoading = signal(true);
-  readonly isUpdatingRequest = signal(false);
   readonly isSavingQuote = signal(false);
   readonly editingQuoteId = signal<string | null>(null);
   readonly quotingRequestId = signal<string | null>(null);
@@ -113,7 +110,7 @@ export class AdminRequestsPageComponent {
     return this.quotes().find((quote) => quote.request_id === requestId);
   }
 
-  openQuoteForm(request: PrintRequest): void {
+  async openQuoteForm(request: PrintRequest): Promise<void> {
     const existingQuote = this.quoteForRequest(request.id);
 
     this.quotingRequestId.set(request.id);
@@ -126,6 +123,24 @@ export class AdminRequestsPageComponent {
       notes: existingQuote?.notes ?? '',
       status: existingQuote?.status ?? 'SENT'
     });
+
+    if (request.status === 'PENDING') {
+      try {
+        const [updatedRequest] = await firstValueFrom(
+          this.requestsService.update(request.id, { status: 'IN_REVIEW' })
+        );
+
+        if (updatedRequest) {
+          this.requests.update((requests) =>
+            requests.map((currentRequest) =>
+              currentRequest.id === updatedRequest.id ? updatedRequest : currentRequest
+            )
+          );
+        }
+      } catch (error) {
+        this.errorMessage.set(getApiErrorMessage(error, 'No pudimos marcar la solicitud en revision.'));
+      }
+    }
   }
 
   closeQuoteForm(): void {
@@ -187,28 +202,6 @@ export class AdminRequestsPageComponent {
       this.errorMessage.set(getApiErrorMessage(error, 'No pudimos guardar la cotizacion.'));
     } finally {
       this.isSavingQuote.set(false);
-    }
-  }
-
-  async updateRequestStatus(request: PrintRequest, status: string): Promise<void> {
-    if (request.status === status) {
-      return;
-    }
-
-    this.isUpdatingRequest.set(true);
-    this.errorMessage.set('');
-    this.successMessage.set('');
-
-    try {
-      await firstValueFrom(
-        this.requestsService.update(request.id, { status: status as RequestStatus })
-      );
-      this.successMessage.set('El estado de la solicitud se actualizo correctamente.');
-      await this.loadData();
-    } catch (error) {
-      this.errorMessage.set(getApiErrorMessage(error, 'No pudimos actualizar la solicitud.'));
-    } finally {
-      this.isUpdatingRequest.set(false);
     }
   }
 

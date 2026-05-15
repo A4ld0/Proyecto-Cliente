@@ -1,5 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { createClient, RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -28,6 +29,17 @@ export class SupabaseService {
 
   private readonly supabaseUrl = environment.supabase.url;
   private readonly supabaseAnonKey = environment.supabase.anonKey;
+  private readonly realtimeClient: SupabaseClient = createClient(
+    this.supabaseUrl,
+    this.supabaseAnonKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        persistSession: false
+      }
+    }
+  );
 
   get isConfigured(): boolean {
     return (
@@ -37,10 +49,19 @@ export class SupabaseService {
 
   setAccessToken(token: string | null): void {
     this.accessToken = token;
+    void this.realtimeClient.realtime.setAuth(token);
   }
 
   getAccessToken(): string | null {
     return this.accessToken;
+  }
+
+  channel(name: string): RealtimeChannel {
+    return this.realtimeClient.channel(name);
+  }
+
+  removeChannel(channel: RealtimeChannel): void {
+    void this.realtimeClient.removeChannel(channel);
   }
 
   private get headers(): HttpHeaders {
@@ -116,11 +137,22 @@ export class SupabaseService {
     });
   }
 
-  uploadStorageObject(bucket: string, path: string, file: File): Observable<unknown> {
+  rpc<T>(functionName: string, payload: Record<string, unknown>): Observable<T> {
+    return this.http.post<T>(`${this.supabaseUrl}/rest/v1/rpc/${functionName}`, payload, {
+      headers: this.headers
+    });
+  }
+
+  uploadStorageObject(
+    bucket: string,
+    path: string,
+    file: File,
+    options?: { contentType?: string }
+  ): Observable<unknown> {
     const headers = new HttpHeaders({
       apikey: this.supabaseAnonKey,
       Authorization: `Bearer ${this.accessToken ?? this.supabaseAnonKey}`,
-      'Content-Type': file.type,
+      'Content-Type': options?.contentType ?? file.type,
       'x-upsert': 'true'
     });
 

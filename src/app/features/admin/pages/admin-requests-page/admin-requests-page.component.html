@@ -3,7 +3,7 @@
     <div class="page-title">
       <span class="eyebrow">Admin</span>
       <h1>Solicitudes</h1>
-      <p>Revisa solicitudes de clientes, cambia su estado y genera cotizaciones.</p>
+      <p>Revisa solicitudes de clientes y genera cotizaciones.</p>
     </div>
   </div>
 
@@ -93,7 +93,7 @@
     <section class="panel">
       <div class="page-title">
         <h2>Listado general</h2>
-        <p>Las solicitudes nacen desde cliente. Admin solo revisa, actualiza y cotiza.</p>
+        <p>El estado avanza con cada accion del flujo.</p>
       </div>
 
       @if (isLoading()) {
@@ -136,18 +136,15 @@
               </div>
 
               <div class="request-card-side">
-                <div class="field request-status-field">
-                  <label [for]="'request_status_' + request.id">Estado</label>
-                  <select
-                    [id]="'request_status_' + request.id"
-                    [value]="request.status"
-                    [disabled]="isUpdatingRequest()"
-                    (change)="updateRequestStatus(request, $any($event.target).value)"
+                <div class="request-state-summary">
+                  <span class="muted">Estado solicitud</span>
+                  <span
+                    class="status-chip"
+                    [class.warn]="statusClass(request.status) === 'warn'"
+                    [class.danger]="statusClass(request.status) === 'danger'"
                   >
-                    @for (status of requestStatuses; track status) {
-                      <option [value]="status">{{ requestStatusLabels[status] }}</option>
-                    }
-                  </select>
+                    {{ requestStatusLabels[request.status] }}
+                  </span>
                 </div>
 
                 @if (quoteForRequest(request.id); as quote) {

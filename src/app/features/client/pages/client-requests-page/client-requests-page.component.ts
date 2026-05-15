@@ -3,11 +3,12 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import {
+  QUOTE_STATUS_LABELS,
   REQUEST_STATUS_LABELS,
   REQUEST_TYPE_LABELS,
   REQUEST_TYPES
 } from '../../../../core/constants/printlab.constants';
-import { AuthService, CartService, RequestsService } from '../../../../core/services';
+import { AuthService, CartService, QuotesService, RequestsService } from '../../../../core/services';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import {
   getFieldErrorMessage,
@@ -17,6 +18,7 @@ import {
 import {
   PrintRequest,
   PrintRequestPayload,
+  Quote,
   RequestStatus,
   RequestType
 } from '../../../../interfaces';
@@ -32,6 +34,7 @@ export class ClientRequestsPageComponent {
   private readonly authService = inject(AuthService);
   private readonly cartService = inject(CartService);
   private readonly requestsService = inject(RequestsService);
+  private readonly quotesService = inject(QuotesService);
   private readonly allowedAttachmentTypes = ['image/png', 'image/jpeg', 'image/webp', 'model/stl'];
   private readonly maxAttachmentSize = 20 * 1024 * 1024;
 
@@ -40,7 +43,9 @@ export class ClientRequestsPageComponent {
   readonly cartItemCount = this.cartService.itemCount;
   readonly cartEstimatedTotal = this.cartService.estimatedTotal;
   readonly requests = signal<PrintRequest[]>([]);
+  readonly quotes = signal<Quote[]>([]);
   readonly requestStatusLabels = REQUEST_STATUS_LABELS;
+  readonly quoteStatusLabels = QUOTE_STATUS_LABELS;
   readonly requestTypes = REQUEST_TYPES;
   readonly requestTypeLabels = REQUEST_TYPE_LABELS;
   readonly isLoading = signal(true);
@@ -48,6 +53,7 @@ export class ClientRequestsPageComponent {
   readonly selectedAttachment = signal<File | null>(null);
   readonly selectedAttachmentPreview = signal('');
   readonly editingId = signal<string | null>(null);
+  readonly quoteActionId = signal<string | null>(null);
   readonly errorMessage = signal('');
   readonly successMessage = signal('');
   readonly validationMessages: Record<string, ValidationMessages> = {
@@ -100,7 +106,13 @@ export class ClientRequestsPageComponent {
 
     try {
       const requests = await firstValueFrom(this.requestsService.list({ clientId: user.id }));
+      const requestIds = requests.map((request) => request.id);
+      const quotes = requestIds.length
+        ? await firstValueFrom(this.quotesService.list({ requestIds }))
+        : [];
+
       this.requests.set(requests);
+      this.quotes.set(quotes);
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'No pudimos cargar tus solicitudes.'));
     } finally {
@@ -242,6 +254,68 @@ export class ClientRequestsPageComponent {
     }
   }
 
+  async cancelRequest(request: PrintRequest): Promise<void> {
+    if (!window.confirm(`Deseas cancelar la solicitud "${request.title}"?`)) {
+      return;
+    }
+
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    try {
+      await firstValueFrom(this.requestsService.update(request.id, { status: 'CANCELED' }));
+      this.successMessage.set('La solicitud se cancelo correctamente.');
+
+      if (this.editingId() === request.id) {
+        this.resetForm();
+      }
+
+      await this.loadRequests();
+    } catch (error) {
+      this.errorMessage.set(getApiErrorMessage(error, 'No pudimos cancelar la solicitud.'));
+    }
+  }
+
+  async acceptQuote(quote: Quote): Promise<void> {
+    if (!window.confirm('Deseas aceptar esta cotizacion y crear el pedido?')) {
+      return;
+    }
+
+    this.quoteActionId.set(quote.id);
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    try {
+      await firstValueFrom(this.quotesService.acceptQuote(quote.id));
+      this.successMessage.set('Cotizacion aceptada. Tu pedido se creo correctamente.');
+      await this.loadRequests();
+    } catch (error) {
+      this.errorMessage.set(getApiErrorMessage(error, 'No pudimos aceptar la cotizacion.'));
+    } finally {
+      this.quoteActionId.set(null);
+    }
+  }
+
+  async rejectQuote(quote: Quote): Promise<void> {
+    if (!window.confirm('Deseas rechazar esta cotizacion?')) {
+      return;
+    }
+
+    this.quoteActionId.set(quote.id);
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    try {
+      await firstValueFrom(this.quotesService.rejectQuote(quote.id));
+      this.successMessage.set('Cotizacion rechazada correctamente.');
+      await this.loadRequests();
+    } catch (error) {
+      this.errorMessage.set(getApiErrorMessage(error, 'No pudimos rechazar la cotizacion.'));
+    } finally {
+      this.quoteActionId.set(null);
+    }
+  }
+
   statusClass(status: RequestStatus): string {
     if (status === 'CANCELED') {
       return 'danger';
@@ -266,6 +340,18 @@ export class ClientRequestsPageComponent {
     return file.name.toLowerCase().endsWith('.stl') ? 'STL' : 'IMAGE';
   }
 
+  quoteForRequest(requestId: string): Quote | undefined {
+    return this.quotes().find((quote) => quote.request_id === requestId);
+  }
+
+  canEditRequest(request: PrintRequest): boolean {
+    return request.status === 'PENDING';
+  }
+
+  canCancelRequest(request: PrintRequest): boolean {
+    return ['IN_REVIEW', 'QUOTED'].includes(request.status);
+  }
+
   private async buildAttachmentPayload(requestId: string): Promise<Partial<PrintRequestPayload>> {
     const file = this.selectedAttachment();
 
@@ -279,7 +365,7 @@ export class ClientRequestsPageComponent {
     return {
       attachment_url: `${upload.url}?v=${Date.now()}`,
       attachment_name: file.name,
-      attachment_type: file.type || 'model/stl',
+      attachment_type: this.requestsService.getAttachmentContentType(file),
       attachment_kind: this.attachmentKind(file)
     };
   }

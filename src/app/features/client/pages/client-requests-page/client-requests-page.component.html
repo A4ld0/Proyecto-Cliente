@@ -176,6 +176,52 @@
                 </div>
               }
 
+              @if (quoteForRequest(request.id); as quote) {
+                <div class="quote-card">
+                  <div>
+                    <span class="muted">Cotizacion</span>
+                    <strong>{{ quote.price_total | currency: 'MXN' }}</strong>
+                    @if (quote.estimated_days) {
+                      <p>{{ quote.estimated_days }} dias estimados</p>
+                    }
+                    @if (quote.notes) {
+                      <p>{{ quote.notes }}</p>
+                    }
+                  </div>
+
+                  <div class="quote-card__side">
+                    <span
+                      class="status-chip"
+                      [class.warn]="quote.status === 'DRAFT' || quote.status === 'SENT'"
+                      [class.danger]="quote.status === 'REJECTED' || quote.status === 'EXPIRED'"
+                    >
+                      {{ quoteStatusLabels[quote.status] }}
+                    </span>
+
+                    @if (quote.status === 'SENT') {
+                      <div class="actions quote-actions">
+                        <button
+                          class="button"
+                          type="button"
+                          [disabled]="quoteActionId() === quote.id"
+                          (click)="acceptQuote(quote)"
+                        >
+                          {{ quoteActionId() === quote.id ? 'Procesando...' : 'Aceptar' }}
+                        </button>
+                        <button
+                          class="button-danger"
+                          type="button"
+                          [disabled]="quoteActionId() === quote.id"
+                          (click)="rejectQuote(quote)"
+                        >
+                          Rechazar
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
               <footer class="request-card__footer">
                 <span class="request-date">
                   @if (request.created_at) {
@@ -186,12 +232,20 @@
                 </span>
 
                 <div class="actions request-actions">
-                  <button class="button-secondary" type="button" (click)="editRequest(request)">
-                    Editar
-                  </button>
-                  <button class="button-danger" type="button" (click)="deleteRequest(request)">
-                    Eliminar
-                  </button>
+                  @if (canEditRequest(request)) {
+                    <button class="button-secondary" type="button" (click)="editRequest(request)">
+                      Editar
+                    </button>
+                  }
+                  @if (request.status === 'PENDING') {
+                    <button class="button-danger" type="button" (click)="deleteRequest(request)">
+                      Eliminar
+                    </button>
+                  } @else if (canCancelRequest(request)) {
+                    <button class="button-danger" type="button" (click)="cancelRequest(request)">
+                      Cancelar
+                    </button>
+                  }
                 </div>
               </footer>
             </article>

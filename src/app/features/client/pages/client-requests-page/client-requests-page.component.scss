@@ -150,6 +150,48 @@
   text-decoration: none;
 }
 
+.quote-card {
+  align-items: start;
+  background: rgba(204, 243, 1, 0.07);
+  border: 1px solid rgba(204, 243, 1, 0.2);
+  border-radius: 0.9rem;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 0.9rem;
+}
+
+.quote-card strong {
+  color: #ffffff;
+  display: block;
+  font-size: 1.1rem;
+  margin-top: 0.15rem;
+}
+
+.quote-card p {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin-top: 0.3rem;
+}
+
+.quote-card__side {
+  align-items: flex-end;
+  display: grid;
+  gap: 0.75rem;
+  justify-items: end;
+}
+
+.quote-actions {
+  justify-content: flex-end;
+}
+
+.quote-actions .button,
+.quote-actions .button-danger {
+  min-height: 2.35rem;
+  padding: 0.55rem 0.85rem;
+}
+
 .request-card__chips {
   justify-content: flex-end;
 }
@@ -184,12 +226,16 @@
 
 @media (max-width: 1024px) {
   .requests-layout,
-  .request-card__content {
+  .request-card__content,
+  .quote-card {
     grid-template-columns: 1fr;
   }
 
-  .request-card__chips {
+  .request-card__chips,
+  .quote-card__side {
+    align-items: flex-start;
     justify-content: flex-start;
+    justify-items: start;
   }
 }
 
@@ -201,7 +247,10 @@
 
   .request-actions,
   .request-actions .button-secondary,
-  .request-actions .button-danger {
+  .request-actions .button-danger,
+  .quote-actions,
+  .quote-actions .button,
+  .quote-actions .button-danger {
     width: 100%;
   }
 }

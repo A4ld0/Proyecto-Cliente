@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Quote, QuotePayload } from '../../interfaces';
+import { Order, Quote, QuotePayload } from '../../interfaces';
 import { SupabaseService } from './supabase.service';
 
 @Injectable({ providedIn: 'root' })
@@ -22,5 +22,13 @@ export class QuotesService {
 
   update(id: string, payload: Partial<QuotePayload>) {
     return this.supabase.update<Quote>(this.table, payload, [{ column: 'id', value: id }]);
+  }
+
+  acceptQuote(quoteId: string) {
+    return this.supabase.rpc<Order>('accept_quote', { p_quote_id: quoteId });
+  }
+
+  rejectQuote(quoteId: string) {
+    return this.supabase.rpc<Quote>('reject_quote', { p_quote_id: quoteId });
   }
 }

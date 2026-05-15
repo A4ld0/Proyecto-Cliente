@@ -29,11 +29,20 @@ export class RequestsService {
 
   uploadAttachment(requestId: string, file: File) {
     const path = `${requestId}/${Date.now()}-${this.sanitizeFileName(file.name)}`;
+    const contentType = this.getAttachmentContentType(file);
 
     return {
-      request: this.supabase.uploadStorageObject(this.bucket, path, file),
+      request: this.supabase.uploadStorageObject(this.bucket, path, file, { contentType }),
       url: this.supabase.getPublicStorageUrl(this.bucket, path)
     };
+  }
+
+  getAttachmentContentType(file: File): string {
+    if (file.name.toLowerCase().endsWith('.stl')) {
+      return 'model/stl';
+    }
+
+    return file.type;
   }
 
   private sanitizeFileName(fileName: string): string {

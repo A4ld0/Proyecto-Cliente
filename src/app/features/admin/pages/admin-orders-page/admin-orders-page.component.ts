@@ -1,13 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import { firstValueFrom } from 'rxjs';
 import {
   ORDER_STATUSES,
   ORDER_STATUS_LABELS,
   QUOTE_STATUS_LABELS
 } from '../../../../core/constants/printlab.constants';
-import { OrdersService, QuotesService, RequestsService, UsersService } from '../../../../core/services';
+import {
+  OrderRealtimePayload,
+  OrdersService,
+  QuotesService,
+  RequestsService,
+  UsersService
+} from '../../../../core/services';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import {
   getFieldErrorMessage,
@@ -23,11 +30,12 @@ import { Order, OrderPayload, OrderStatus, Quote, PrintRequest, User } from '../
   styleUrl: './admin-orders-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AdminOrdersPageComponent {
+export class AdminOrdersPageComponent implements OnDestroy {
   private readonly ordersService = inject(OrdersService);
   private readonly quotesService = inject(QuotesService);
   private readonly requestsService = inject(RequestsService);
   private readonly usersService = inject(UsersService);
+  private ordersChannel: RealtimeChannel | null = null;
 
   readonly orders = signal<Order[]>([]);
   readonly quotes = signal<Quote[]>([]);
@@ -68,6 +76,13 @@ export class AdminOrdersPageComponent {
 
   constructor() {
     void this.loadData();
+    this.subscribeToOrdersRealtime();
+  }
+
+  ngOnDestroy(): void {
+    if (this.ordersChannel) {
+      this.ordersService.removeRealtimeChannel(this.ordersChannel);
+    }
   }
 
   async loadData(): Promise<void> {
@@ -226,5 +241,43 @@ export class AdminOrdersPageComponent {
 
   getFieldError(controlName: string): string {
     return getFieldErrorMessage(this.form, controlName, this.validationMessages[controlName] ?? {});
+  }
+
+  private subscribeToOrdersRealtime(): void {
+    this.ordersChannel = this.ordersService.watchAllOrders((payload) => {
+      this.applyOrderRealtimePayload(payload);
+    });
+  }
+
+  private applyOrderRealtimePayload(payload: OrderRealtimePayload): void {
+    if (payload.eventType === 'DELETE') {
+      const deletedId = payload.old['id'];
+
+      if (typeof deletedId === 'string') {
+        this.orders.update((orders) => orders.filter((order) => order.id !== deletedId));
+
+        if (this.editingId() === deletedId) {
+          this.resetForm();
+        }
+      }
+
+      return;
+    }
+
+    const changedOrder = payload.new as Order;
+
+    if (!changedOrder?.id) {
+      return;
+    }
+
+    this.orders.update((orders) => {
+      const exists = orders.some((order) => order.id === changedOrder.id);
+
+      if (!exists) {
+        return [changedOrder, ...orders];
+      }
+
+      return orders.map((order) => (order.id === changedOrder.id ? changedOrder : order));
+    });
   }
 }

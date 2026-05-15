@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CatalogService } from '../../../../core/services';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
@@ -8,7 +9,7 @@ import { CatalogProduct, CatalogProductPayload } from '../../../../interfaces';
 
 @Component({
   selector: 'app-admin-catalog-page',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './admin-catalog-page.component.html',
   styleUrl: './admin-catalog-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

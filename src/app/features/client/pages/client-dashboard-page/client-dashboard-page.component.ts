@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import { firstValueFrom } from 'rxjs';
 import {
   ORDER_STATUS_LABELS,
@@ -9,6 +10,7 @@ import {
 } from '../../../../core/constants/printlab.constants';
 import {
   AuthService,
+  OrderRealtimePayload,
   OrdersService,
   QuotesService,
   RequestsService
@@ -23,11 +25,12 @@ import { Order, Quote, PrintRequest } from '../../../../interfaces';
   styleUrl: './client-dashboard-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ClientDashboardPageComponent {
+export class ClientDashboardPageComponent implements OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly requestsService = inject(RequestsService);
   private readonly ordersService = inject(OrdersService);
   private readonly quotesService = inject(QuotesService);
+  private ordersChannel: RealtimeChannel | null = null;
 
   readonly currentUser = this.authService.currentUser;
   readonly requests = signal<PrintRequest[]>([]);
@@ -51,6 +54,13 @@ export class ClientDashboardPageComponent {
 
   constructor() {
     void this.loadData();
+    this.subscribeToOrdersRealtime();
+  }
+
+  ngOnDestroy(): void {
+    if (this.ordersChannel) {
+      this.ordersService.removeRealtimeChannel(this.ordersChannel);
+    }
   }
 
   async loadData(): Promise<void> {
@@ -87,5 +97,45 @@ export class ClientDashboardPageComponent {
 
   quoteTotal(quoteId: string): number {
     return Number(this.quotes().find((quote) => quote.id === quoteId)?.price_total ?? 0);
+  }
+
+  private subscribeToOrdersRealtime(): void {
+    const user = this.currentUser();
+
+    if (!user) {
+      return;
+    }
+
+    this.ordersChannel = this.ordersService.watchClientOrders(user.id, (payload) => {
+      this.applyOrderRealtimePayload(payload);
+    });
+  }
+
+  private applyOrderRealtimePayload(payload: OrderRealtimePayload): void {
+    if (payload.eventType === 'DELETE') {
+      const deletedId = payload.old['id'];
+
+      if (typeof deletedId === 'string') {
+        this.orders.update((orders) => orders.filter((order) => order.id !== deletedId));
+      }
+
+      return;
+    }
+
+    const changedOrder = payload.new as Order;
+
+    if (!changedOrder?.id) {
+      return;
+    }
+
+    this.orders.update((orders) => {
+      const exists = orders.some((order) => order.id === changedOrder.id);
+
+      if (!exists) {
+        return [changedOrder, ...orders];
+      }
+
+      return orders.map((order) => (order.id === changedOrder.id ? changedOrder : order));
+    });
   }
 }

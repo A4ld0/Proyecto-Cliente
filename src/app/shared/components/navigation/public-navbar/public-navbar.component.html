@@ -15,7 +15,9 @@
     >
       Inicio
     </a>
-    <a routerLink="/catalogo" routerLinkActive="link-active">Catalogo</a>
+    @if (currentUser()?.role !== 'ADMIN') {
+      <a routerLink="/catalogo" routerLinkActive="link-active">Catalogo</a>
+    }
 
     @if (!isAuthenticated()) {
       <a class="link-muted" routerLink="/login" routerLinkActive="link-active">Ingresar</a>
@@ -39,7 +41,7 @@
       @if (currentUser()?.role === 'ADMIN') {
         <a routerLink="/admin/requests" routerLinkActive="link-active">Solicitudes</a>
         <a routerLink="/admin/orders" routerLinkActive="link-active">Pedidos</a>
-        <a routerLink="/admin/catalog" routerLinkActive="link-active">Catalogo</a>
+        <a routerLink="/admin/catalog" routerLinkActive="link-active">Productos</a>
         <a routerLink="/admin/users" routerLinkActive="link-active">Usuarios</a>
       }
     }

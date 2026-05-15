@@ -1,3 +1,148 @@
 :host {
   display: block;
 }
+
+.quote-preview {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.9rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 0.85rem;
+}
+
+.quote-preview strong {
+  color: #ffffff;
+  display: block;
+  font-size: 1.05rem;
+  margin-top: 0.15rem;
+}
+
+.quote-preview div:last-child {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: end;
+  text-align: right;
+}
+
+.quote-preview span:not(.muted) {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.quote-preview small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.orders-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.order-card {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+}
+
+.order-card__main,
+.order-card__footer {
+  align-items: start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.order-title {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.order-title h3 {
+  color: #ffffff;
+  font-size: 1rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.order-title p {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.order-meta,
+.order-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+}
+
+.quote-chip {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.35rem 0.7rem;
+  white-space: nowrap;
+}
+
+.order-card__footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.85rem;
+}
+
+.order-total {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.order-total strong {
+  color: #ffffff;
+  font-size: 1.05rem;
+}
+
+.order-actions .button-secondary,
+.order-actions .button-danger {
+  min-height: 2.35rem;
+  padding: 0.55rem 0.85rem;
+}
+
+@media (max-width: 900px) {
+  .order-card__main,
+  .order-card__footer,
+  .quote-preview {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .order-meta,
+  .order-actions {
+    justify-content: flex-start;
+  }
+
+  .quote-preview div:last-child {
+    justify-items: start;
+    text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .order-actions,
+  .order-actions .button-secondary,
+  .order-actions .button-danger {
+    width: 100%;
+  }
+}

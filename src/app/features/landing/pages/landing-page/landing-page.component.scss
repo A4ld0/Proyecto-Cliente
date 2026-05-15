@@ -257,22 +257,6 @@
   max-width: 29rem;
 }
 
-.portfolio-specs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-}
-
-.portfolio-specs span {
-  background: rgba(204, 243, 1, 0.1);
-  border: 1px solid rgba(204, 243, 1, 0.2);
-  border-radius: 8px;
-  color: #f2ffc0;
-  font-size: 0.78rem;
-  font-weight: 700;
-  padding: 0.55rem 0.7rem;
-}
-
 .portfolio-controls {
   align-items: center;
   display: flex;

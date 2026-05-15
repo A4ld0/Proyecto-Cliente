@@ -14,6 +14,11 @@
   gap: 1rem;
 }
 
+.catalog-public-link {
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 .image-uploader {
   align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.09);

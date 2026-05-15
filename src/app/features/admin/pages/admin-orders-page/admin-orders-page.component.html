@@ -33,8 +33,7 @@
           >
             @for (quote of availableQuotes(); track quote.id) {
               <option [value]="quote.id">
-                {{ requestTitleFromQuote(quote.id) }} | {{ quoteStatusLabels[quote.status] }} |
-                {{ quote.price_total | currency: 'MXN' }}
+                {{ requestTitleFromQuote(quote.id) }}
               </option>
             }
           </select>
@@ -45,6 +44,19 @@
             <p class="field-hint">No hay cotizaciones aceptadas disponibles para crear pedidos.</p>
           }
         </div>
+
+        @if (quoteById(form.controls.quote_id.getRawValue()); as selectedQuote) {
+          <div class="quote-preview field-full">
+            <div>
+              <span class="muted">Cotizacion seleccionada</span>
+              <strong>{{ selectedQuote.price_total | currency: 'MXN' }}</strong>
+            </div>
+            <div>
+              <span>{{ clientName(form.controls.client_id.getRawValue()) }}</span>
+              <small>{{ quoteStatusLabels[selectedQuote.status] }}</small>
+            </div>
+          </div>
+        }
 
         <div class="field field-full" [class.field-invalid]="hasFieldError('client_id')">
           <label for="client_id">Cliente</label>
@@ -95,48 +107,47 @@
       @if (isLoading()) {
         <p class="muted">Cargando pedidos...</p>
       } @else if (orders().length) {
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Solicitud</th>
-                <th>Cliente</th>
-                <th>Estado pedido</th>
-                <th>Estado cotizacion</th>
-                <th>Total</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (order of orders(); track order.id) {
-                <tr>
-                  <td>{{ requestTitleFromQuote(order.quote_id) }}</td>
-                  <td>{{ clientName(order.client_id) }}</td>
-                  <td>
-                    <span
-                      class="status-chip"
-                      [class.warn]="statusClass(order.status) === 'warn'"
-                      [class.danger]="statusClass(order.status) === 'danger'"
-                    >
-                      {{ orderStatusLabels[order.status] }}
-                    </span>
-                  </td>
-                  <td>{{ quoteStatusLabels[quoteById(order.quote_id)?.status ?? 'DRAFT'] }}</td>
-                  <td>{{ quoteTotal(order.quote_id) | currency: 'MXN' }}</td>
-                  <td>
-                    <div class="actions">
-                      <button class="button-secondary" type="button" (click)="editOrder(order)">
-                        Editar
-                      </button>
-                      <button class="button-danger" type="button" (click)="deleteOrder(order)">
-                        Eliminar
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+        <div class="orders-list" role="list">
+          @for (order of orders(); track order.id) {
+            <article class="order-card" role="listitem">
+              <div class="order-card__main">
+                <div class="order-title">
+                  <span class="eyebrow">Pedido</span>
+                  <h3>{{ requestTitleFromQuote(order.quote_id) }}</h3>
+                  <p>{{ clientName(order.client_id) }}</p>
+                </div>
+
+                <div class="order-meta">
+                  <span
+                    class="status-chip"
+                    [class.warn]="statusClass(order.status) === 'warn'"
+                    [class.danger]="statusClass(order.status) === 'danger'"
+                  >
+                    {{ orderStatusLabels[order.status] }}
+                  </span>
+                  <span class="quote-chip">
+                    {{ quoteStatusLabels[quoteById(order.quote_id)?.status ?? 'DRAFT'] }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="order-card__footer">
+                <div class="order-total">
+                  <span class="muted">Total</span>
+                  <strong>{{ quoteTotal(order.quote_id) | currency: 'MXN' }}</strong>
+                </div>
+
+                <div class="actions order-actions">
+                  <button class="button-secondary" type="button" (click)="editOrder(order)">
+                    Editar
+                  </button>
+                  <button class="button-danger" type="button" (click)="deleteOrder(order)">
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            </article>
+          }
         </div>
       } @else {
         <div class="empty-state">No hay pedidos registrados.</div>

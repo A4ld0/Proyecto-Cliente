@@ -1,6 +1,9 @@
 import { Injectable, inject } from '@angular/core';
+import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { Order, OrderPayload } from '../../interfaces';
 import { SupabaseService } from './supabase.service';
+
+export type OrderRealtimePayload = RealtimePostgresChangesPayload<Order>;
 
 @Injectable({ providedIn: 'root' })
 export class OrdersService {
@@ -24,5 +27,43 @@ export class OrdersService {
 
   delete(id: string) {
     return this.supabase.delete<Order>(this.table, [{ column: 'id', value: id }]);
+  }
+
+  watchClientOrders(
+    clientId: string,
+    onChange: (payload: OrderRealtimePayload) => void
+  ): RealtimeChannel {
+    return this.supabase
+      .channel(`client-orders-${clientId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: this.table,
+          filter: `client_id=eq.${clientId}`
+        },
+        onChange
+      )
+      .subscribe();
+  }
+
+  watchAllOrders(onChange: (payload: OrderRealtimePayload) => void): RealtimeChannel {
+    return this.supabase
+      .channel('admin-orders')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: this.table
+        },
+        onChange
+      )
+      .subscribe();
+  }
+
+  removeRealtimeChannel(channel: RealtimeChannel): void {
+    this.supabase.removeChannel(channel);
   }
 }
