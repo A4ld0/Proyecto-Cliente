@@ -521,11 +521,21 @@
 @media (max-width: 680px) {
   .catalog-shell {
     margin-inline: -1rem;
-    padding-top: 2rem;
+    gap: 1.25rem;
+    padding: 1.5rem 1rem 2.5rem;
   }
 
   .catalog-title h1 {
+    font-size: 3rem;
     max-width: none;
+  }
+
+  .catalog-title {
+    gap: 0.75rem;
+  }
+
+  .catalog-title p {
+    line-height: 1.55;
   }
 
   .catalog-summary,
@@ -559,6 +569,15 @@
   }
 
   .product-card {
-    grid-template-rows: 210px 1fr;
+    grid-template-rows: 190px 1fr;
+  }
+
+  .product-body {
+    gap: 0.75rem;
+    padding: 0.9rem;
+  }
+
+  .product-heading h2 {
+    font-size: 1.25rem;
   }
 }

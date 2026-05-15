@@ -46,8 +46,8 @@
           <tbody>
             @for (order of orders(); track order.id) {
               <tr>
-                <td>{{ requestTitleFromQuote(order.quote_id) }}</td>
-                <td>
+                <td data-label="Solicitud">{{ requestTitleFromQuote(order.quote_id) }}</td>
+                <td data-label="Pedido">
                   <span
                     class="status-chip"
                     [class.warn]="statusClass(order.status) === 'warn'"
@@ -56,15 +56,15 @@
                     {{ orderStatusLabels[order.status] }}
                   </span>
                 </td>
-                <td>
+                <td data-label="Cotizacion">
                   @if (quoteStatus(order.quote_id); as status) {
                     {{ quoteStatusLabels[status] }}
                   } @else {
                     Sin cotizacion
                   }
                 </td>
-                <td>{{ quoteTotal(order.quote_id) | currency: 'MXN' }}</td>
-                <td>{{ order.created_at ? (order.created_at | date: 'medium') : 'Sin fecha' }}</td>
+                <td data-label="Total">{{ quoteTotal(order.quote_id) | currency: 'MXN' }}</td>
+                <td data-label="Creado">{{ order.created_at ? (order.created_at | date: 'medium') : 'Sin fecha' }}</td>
               </tr>
             }
           </tbody>

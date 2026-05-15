@@ -377,6 +377,82 @@ textarea.ng-invalid.ng-touched {
   }
 }
 
+@media (max-width: 640px) {
+  .page-shell {
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .page-header {
+    gap: 0.75rem;
+  }
+
+  .page-title {
+    gap: 0.3rem;
+  }
+
+  .page-title h1,
+  .admin-shell .page-title h1,
+  .client-shell .page-title h1,
+  .auth-shell .page-title h1 {
+    font-size: 2.25rem;
+  }
+
+  .page-title h2 {
+    font-size: 1.45rem;
+  }
+
+  .page-title p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .panel {
+    border-radius: 1rem;
+    padding: 1rem;
+  }
+
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card strong {
+    font-size: 1.55rem;
+  }
+
+  input,
+  select,
+  textarea {
+    border-radius: 0.8rem;
+    font-size: 1rem;
+  }
+
+  .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .button,
+  .button-secondary,
+  .button-ghost,
+  .button-danger {
+    width: 100%;
+  }
+
+  .notice,
+  .alert,
+  .empty-state {
+    border-radius: 0.9rem;
+  }
+
+  .admin-shell,
+  .client-shell,
+  .auth-shell {
+    min-height: auto;
+    padding-block: 0 2rem;
+  }
+}
+
 .admin-shell,
 .client-shell,
 .auth-shell {
