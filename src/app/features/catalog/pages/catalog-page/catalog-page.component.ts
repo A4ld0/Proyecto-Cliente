@@ -1,18 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService, CartService } from '../../../../core/services';
-
-interface CatalogProduct {
-  name: string;
-  category: string;
-  description: string;
-  image: string;
-  materials: string[];
-  colors: string[];
-  priceFrom: number;
-  delivery: string;
-  tags: string[];
-}
+import { firstValueFrom } from 'rxjs';
+import { AuthService, CartService, CatalogService } from '../../../../core/services';
+import { CatalogProduct } from '../../../../interfaces';
 
 interface CatalogMaterial {
   name: string;
@@ -33,6 +23,7 @@ export class CatalogPageComponent implements OnDestroy {
   private cartMessageTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private readonly authService = inject(AuthService);
   private readonly cartService = inject(CartService);
+  private readonly catalogService = inject(CatalogService);
   private readonly router = inject(Router);
 
   readonly isAuthenticated = this.authService.isAuthenticated;
@@ -40,72 +31,87 @@ export class CatalogPageComponent implements OnDestroy {
   readonly cartItemCount = this.cartService.itemCount;
   readonly cartEstimatedTotal = this.cartService.estimatedTotal;
 
-  readonly products: CatalogProduct[] = [
+  readonly products = signal<CatalogProduct[]>([]);
+  readonly isLoadingProducts = signal(true);
+
+  readonly fallbackProducts: CatalogProduct[] = [
     {
+      id: 'fallback-figures',
       name: 'Figuras coleccionables',
       category: 'Miniaturas',
       description: 'Piezas con alto detalle para pintura, exhibicion o regalos personalizados.',
-      image: 'assets/landing/hero-model.png',
+      image_url: 'assets/landing/hero-model.png',
       materials: ['Resina', 'PLA'],
       colors: ['Gris', 'Negro', 'Blanco'],
-      priceFrom: 280,
+      price_from: 280,
       delivery: '5 a 7 dias',
-      tags: ['Alto detalle', 'Base incluida', 'Acabado fino']
+      tags: ['Alto detalle', 'Base incluida', 'Acabado fino'],
+      is_active: true
     },
     {
+      id: 'fallback-prototypes',
       name: 'Prototipos funcionales',
       category: 'Producto',
       description: 'Modelos resistentes para validar forma, escala, ensamble y ergonomia.',
-      image: 'assets/landing/prototype.png',
+      image_url: 'assets/landing/prototype.png',
       materials: ['PLA', 'PETG', 'ABS'],
       colors: ['Negro', 'Blanco', 'Azul'],
-      priceFrom: 180,
+      price_from: 180,
       delivery: '2 a 4 dias',
-      tags: ['Iteracion rapida', 'Medidas reales', 'Uso tecnico']
+      tags: ['Iteracion rapida', 'Medidas reales', 'Uso tecnico'],
+      is_active: true
     },
     {
+      id: 'fallback-custom',
       name: 'Piezas bajo pedido',
       category: 'Fabricacion',
       description: 'Impresion personalizada desde STL, referencia visual o requerimientos del cliente.',
-      image: 'assets/landing/alien.webp',
+      image_url: 'assets/landing/alien.webp',
       materials: ['PLA', 'PETG', 'Resina'],
       colors: ['Verde', 'Gris', 'Rojo'],
-      priceFrom: 220,
+      price_from: 220,
       delivery: '3 a 6 dias',
-      tags: ['Personalizable', 'Cotizacion clara', 'Seguimiento']
+      tags: ['Personalizable', 'Cotizacion clara', 'Seguimiento'],
+      is_active: true
     },
     {
+      id: 'fallback-keychains',
       name: 'Llaveros personalizados',
       category: 'Promocionales',
       description: 'Accesorios ligeros con logo, nombre, silueta o relieve personalizado.',
-      image: 'assets/landing/bloxing-glove.png',
+      image_url: 'assets/landing/bloxing-glove.png',
       materials: ['PLA', 'TPU'],
       colors: ['Negro', 'Blanco', 'Rojo', 'Azul'],
-      priceFrom: 45,
+      price_from: 45,
       delivery: '2 a 3 dias',
-      tags: ['Por volumen', 'Color a elegir', 'Ligero']
+      tags: ['Por volumen', 'Color a elegir', 'Ligero'],
+      is_active: true
     },
     {
+      id: 'fallback-organizers',
       name: 'Soportes y organizadores',
       category: 'Hogar y oficina',
       description: 'Bases, soportes y accesorios utiles para escritorio, cables, herramientas o repisas.',
-      image: 'assets/landing/organizer.png',
+      image_url: 'assets/landing/organizer.png',
       materials: ['PLA', 'PETG'],
       colors: ['Negro', 'Blanco', 'Gris'],
-      priceFrom: 90,
+      price_from: 90,
       delivery: '2 a 5 dias',
-      tags: ['Uso diario', 'Resistente', 'A medida']
+      tags: ['Uso diario', 'Resistente', 'A medida'],
+      is_active: true
     },
     {
+      id: 'fallback-flexible',
       name: 'Piezas flexibles',
       category: 'Especiales',
       description: 'Componentes con elasticidad para protectores, agarres, empaques o pruebas de ajuste.',
-      image: 'assets/landing/flexible.png',
+      image_url: 'assets/landing/flexible.png',
       materials: ['TPU'],
       colors: ['Negro', 'Rojo', 'Azul'],
-      priceFrom: 160,
+      price_from: 160,
       delivery: '4 a 7 dias',
-      tags: ['Flexible', 'Antigolpe', 'Uso tecnico']
+      tags: ['Flexible', 'Antigolpe', 'Uso tecnico'],
+      is_active: true
     }
   ];
 
@@ -144,21 +150,21 @@ export class CatalogPageComponent implements OnDestroy {
 
   readonly materialOptions = computed(() => [
     'Todos',
-    ...Array.from(new Set(this.products.flatMap((product) => product.materials))).sort()
+    ...Array.from(new Set(this.products().flatMap((product) => product.materials))).sort()
   ]);
 
   readonly colorOptions = computed(() => [
     'Todos',
-    ...Array.from(new Set(this.products.flatMap((product) => product.colors))).sort()
+    ...Array.from(new Set(this.products().flatMap((product) => product.colors))).sort()
   ]);
 
   readonly filteredProducts = computed(() =>
-    this.products.filter((product) => {
+    this.products().filter((product) => {
       const matchesMaterial =
         this.selectedMaterial() === 'Todos' || product.materials.includes(this.selectedMaterial());
       const matchesColor =
         this.selectedColor() === 'Todos' || product.colors.includes(this.selectedColor());
-      const matchesPrice = product.priceFrom <= this.maxPrice();
+      const matchesPrice = product.price_from <= this.maxPrice();
 
       return matchesMaterial && matchesColor && matchesPrice;
     })
@@ -182,8 +188,25 @@ export class CatalogPageComponent implements OnDestroy {
     return count;
   });
 
+  constructor() {
+    void this.loadProducts();
+  }
+
   ngOnDestroy(): void {
     this.clearCartMessageTimeout();
+  }
+
+  async loadProducts(): Promise<void> {
+    this.isLoadingProducts.set(true);
+
+    try {
+      const products = await firstValueFrom(this.catalogService.list({ activeOnly: true }));
+      this.products.set(products.length ? products : this.fallbackProducts);
+    } catch {
+      this.products.set(this.fallbackProducts);
+    } finally {
+      this.isLoadingProducts.set(false);
+    }
   }
 
   updateMaterial(material: string): void {
@@ -214,7 +237,7 @@ export class CatalogPageComponent implements OnDestroy {
       name: product.name,
       material: this.getSelectedProductMaterial(product),
       color: this.getSelectedProductColor(product),
-      priceFrom: product.priceFrom
+      priceFrom: product.price_from
     });
 
     this.showCartMessage(`${product.name} agregado al carrito.`);

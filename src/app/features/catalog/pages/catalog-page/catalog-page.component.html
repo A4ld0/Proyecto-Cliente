@@ -10,7 +10,7 @@
     </div>
 
     <div class="catalog-summary" aria-label="Resumen del catalogo">
-      <span>{{ products.length }} productos</span>
+      <span>{{ products().length }} productos</span>
       <span>{{ materials.length }} materiales</span>
       <span>Desde $45 MXN</span>
     </div>
@@ -131,7 +131,7 @@
           @for (product of filteredProducts(); track product.name) {
             <article class="product-card">
               <div class="product-media">
-                <img [src]="product.image" [alt]="product.name" />
+                <img [src]="product.image_url" [alt]="product.name" />
               </div>
 
               <div class="product-body">
@@ -149,7 +149,7 @@
                 </div>
 
                 <div class="product-meta">
-                  <span>Desde <strong>${{ product.priceFrom }}</strong></span>
+                  <span>Desde <strong>${{ product.price_from }}</strong></span>
                   <span>{{ product.delivery }}</span>
                 </div>
 

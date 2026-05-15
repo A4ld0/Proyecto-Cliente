@@ -1,16 +1,156 @@
-<section class="page-shell">
-  <section class="panel">
+<section class="page-shell admin-shell">
+  <div class="page-header">
     <div class="page-title">
       <span class="eyebrow">Admin</span>
       <h1>Catalogo</h1>
-      <p>
-        Aqui podras organizar materiales, acabados o servicios disponibles para las solicitudes.
-      </p>
+      <p>Administra productos, materiales, colores, precios e imagenes visibles para clientes.</p>
     </div>
+  </div>
 
-    <div class="empty-state">
-      Esta seccion queda lista para cargar el catalogo cuando definas los elementos que deseas
-      administrar.
-    </div>
-  </section>
+  @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (successMessage()) {
+    <div class="notice">{{ successMessage() }}</div>
+  }
+
+  <div class="split-layout catalog-admin-layout">
+    <section class="panel catalog-form-panel">
+      <div class="page-title">
+        <h2>{{ editingProduct() ? 'Editar producto' : 'Nuevo producto' }}</h2>
+        <p>Los campos con listas se separan por coma.</p>
+      </div>
+
+      <div class="image-uploader">
+        <div class="image-preview">
+          @if (imagePreviewUrl()) {
+            <img [src]="imagePreviewUrl()" alt="Vista previa del producto" />
+          } @else {
+            <span>Imagen</span>
+          }
+        </div>
+
+        <div class="image-actions">
+          <label for="product-image">Seleccionar imagen</label>
+          <input
+            id="product-image"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            (change)="onImageSelected($event)"
+          />
+          <p>JPG, PNG o WEBP. Maximo 5 MB.</p>
+        </div>
+      </div>
+
+      <form class="form-grid" novalidate [formGroup]="form" (ngSubmit)="submit()">
+        <div class="field">
+          <label for="name">Producto</label>
+          <input id="name" type="text" formControlName="name" placeholder="Figuras coleccionables" />
+        </div>
+
+        <div class="field">
+          <label for="category">Categoria</label>
+          <input id="category" type="text" formControlName="category" placeholder="Miniaturas" />
+        </div>
+
+        <div class="field field-full">
+          <label for="description">Descripcion</label>
+          <textarea
+            id="description"
+            formControlName="description"
+            placeholder="Describe el producto, uso y acabado."
+          ></textarea>
+        </div>
+
+        <div class="field">
+          <label for="materials">Materiales</label>
+          <input id="materials" type="text" formControlName="materials" placeholder="PLA, PETG" />
+        </div>
+
+        <div class="field">
+          <label for="colors">Colores</label>
+          <input id="colors" type="text" formControlName="colors" placeholder="Negro, Blanco" />
+        </div>
+
+        <div class="field">
+          <label for="price_from">Precio desde</label>
+          <input id="price_from" type="number" min="1" formControlName="price_from" />
+        </div>
+
+        <div class="field">
+          <label for="delivery">Entrega</label>
+          <input id="delivery" type="text" formControlName="delivery" placeholder="2 a 4 dias" />
+        </div>
+
+        <div class="field field-full">
+          <label for="tags">Etiquetas</label>
+          <input id="tags" type="text" formControlName="tags" placeholder="Alto detalle, Resistente" />
+        </div>
+
+        <label class="toggle-field field-full">
+          <input type="checkbox" formControlName="is_active" />
+          <span>Producto activo en el catalogo publico</span>
+        </label>
+
+        <div class="actions field-full">
+          <button class="button" type="submit" [disabled]="isSaving() || form.invalid">
+            {{ isSaving() ? 'Guardando...' : editingProduct() ? 'Actualizar' : 'Crear producto' }}
+          </button>
+          <button class="button-ghost" type="button" (click)="resetForm()">Limpiar</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel catalog-list-panel">
+      <div class="page-title">
+        <h2>Productos</h2>
+        <p>Estos elementos alimentan el catalogo publico.</p>
+      </div>
+
+      @if (isLoading()) {
+        <p class="muted">Cargando productos...</p>
+      } @else if (products().length) {
+        <div class="admin-product-list">
+          @for (product of products(); track product.id) {
+            <article class="admin-product-card">
+              <img [src]="product.image_url" [alt]="product.name" />
+
+              <div class="admin-product-copy">
+                <div>
+                  <span>{{ product.category }}</span>
+                  <h3>{{ product.name }}</h3>
+                  <p>{{ product.description }}</p>
+                </div>
+
+                <div class="admin-product-meta">
+                  <strong>Desde ${{ product.price_from }} MXN</strong>
+                  <span class="status-chip" [class.warn]="!product.is_active">
+                    {{ product.is_active ? 'Activo' : 'Oculto' }}
+                  </span>
+                </div>
+
+                <div class="admin-product-tags">
+                  @for (material of product.materials; track material) {
+                    <span>{{ material }}</span>
+                  }
+                </div>
+
+                <div class="actions product-actions">
+                  <button class="button-secondary" type="button" (click)="editProduct(product)">
+                    Editar
+                  </button>
+                  <button class="button-danger" type="button" (click)="deleteProduct(product)">
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">Todavia no hay productos en el catalogo.</div>
+      }
+    </section>
+  </div>
 </section>
