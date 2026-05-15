@@ -145,6 +145,7 @@ export class CatalogPageComponent implements OnDestroy {
   readonly selectedMaterial = signal('Todos');
   readonly selectedColor = signal('Todos');
   readonly maxPrice = signal(300);
+  readonly isPriceFilterEnabled = signal(false);
   readonly cartMessage = signal('');
   readonly isCartMessageVisible = signal(false);
 
@@ -164,7 +165,7 @@ export class CatalogPageComponent implements OnDestroy {
         this.selectedMaterial() === 'Todos' || product.materials.includes(this.selectedMaterial());
       const matchesColor =
         this.selectedColor() === 'Todos' || product.colors.includes(this.selectedColor());
-      const matchesPrice = product.price_from <= this.maxPrice();
+      const matchesPrice = !this.isPriceFilterEnabled() || product.price_from <= this.maxPrice();
 
       return matchesMaterial && matchesColor && matchesPrice;
     })
@@ -181,7 +182,7 @@ export class CatalogPageComponent implements OnDestroy {
       count += 1;
     }
 
-    if (this.maxPrice() !== 300) {
+    if (this.isPriceFilterEnabled()) {
       count += 1;
     }
 
@@ -219,12 +220,18 @@ export class CatalogPageComponent implements OnDestroy {
 
   updateMaxPrice(price: string): void {
     this.maxPrice.set(Number(price));
+    this.isPriceFilterEnabled.set(true);
+  }
+
+  clearPriceFilter(): void {
+    this.maxPrice.set(300);
+    this.isPriceFilterEnabled.set(false);
   }
 
   clearFilters(): void {
     this.selectedMaterial.set('Todos');
     this.selectedColor.set('Todos');
-    this.maxPrice.set(300);
+    this.clearPriceFilter();
   }
 
   addToCart(product: CatalogProduct): void {

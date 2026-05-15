@@ -51,7 +51,10 @@
       </label>
 
       <label class="filter-field">
-        <span>Precio maximo: ${{ maxPrice() }} MXN</span>
+        <span>
+          Precio maximo:
+          {{ isPriceFilterEnabled() ? '$' + maxPrice() + ' MXN' : 'Sin limite' }}
+        </span>
         <input
           type="range"
           min="50"
@@ -62,10 +65,16 @@
         />
       </label>
 
+      @if (isPriceFilterEnabled()) {
+        <button type="button" class="clear-price-button" (click)="clearPriceFilter()">
+          Quitar filtro de precio
+        </button>
+      }
+
       <div class="selected-filters">
         <span>{{ selectedMaterial() }}</span>
         <span>{{ selectedColor() }}</span>
-        <span>Hasta ${{ maxPrice() }}</span>
+        <span>{{ isPriceFilterEnabled() ? 'Hasta $' + maxPrice() : 'Sin limite de precio' }}</span>
       </div>
 
       <div class="cart-widget" aria-label="Carrito de cotizacion">

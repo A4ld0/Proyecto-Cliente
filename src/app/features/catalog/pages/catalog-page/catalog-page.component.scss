@@ -106,6 +106,7 @@
 }
 
 .clear-button,
+.clear-price-button,
 .empty-catalog button {
   background: rgba(204, 243, 1, 0.12);
   border: 1px solid rgba(204, 243, 1, 0.28);
@@ -114,6 +115,10 @@
   font-weight: 800;
   min-height: 38px;
   padding: 0.55rem 0.8rem;
+}
+
+.clear-price-button {
+  width: 100%;
 }
 
 .filter-field {
