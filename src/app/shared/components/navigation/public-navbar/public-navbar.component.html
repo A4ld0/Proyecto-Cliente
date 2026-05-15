@@ -7,20 +7,34 @@
     <span class="brand-name">PrintLab 3D</span>
   </a>
 
-  <nav class="links">
+  <button
+    class="menu-button"
+    type="button"
+    [attr.aria-expanded]="isMenuOpen()"
+    aria-controls="primary-navigation"
+    aria-label="Abrir menu de navegacion"
+    (click)="toggleMenu()"
+  >
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <nav id="primary-navigation" class="links" [class.menu-open]="isMenuOpen()">
     <a
       routerLink="/landing"
       routerLinkActive="link-active"
       [routerLinkActiveOptions]="{ exact: true }"
+      (click)="closeMenu()"
     >
       Inicio
     </a>
     @if (currentUser()?.role !== 'ADMIN') {
-      <a routerLink="/catalogo" routerLinkActive="link-active">Catalogo</a>
+      <a routerLink="/catalogo" routerLinkActive="link-active" (click)="closeMenu()">Catalogo</a>
     }
 
     @if (!isAuthenticated()) {
-      <a class="link-muted" routerLink="/login" routerLinkActive="link-active">Ingresar</a>
+      <a class="link-muted" routerLink="/login" routerLinkActive="link-active" (click)="closeMenu()">Ingresar</a>
     }
 
     @if (isAuthenticated()) {
@@ -28,26 +42,27 @@
         [routerLink]="dashboardLink()"
         routerLinkActive="link-active"
         [routerLinkActiveOptions]="{ exact: true }"
+        (click)="closeMenu()"
       >
         Panel
       </a>
 
       @if (currentUser()?.role === 'CLIENT') {
-        <a routerLink="/client/requests" routerLinkActive="link-active">Solicitudes</a>
-        <a routerLink="/client/orders" routerLinkActive="link-active">Pedidos</a>
-        <a routerLink="/client/profile" routerLinkActive="link-active">Perfil</a>
+        <a routerLink="/client/requests" routerLinkActive="link-active" (click)="closeMenu()">Solicitudes</a>
+        <a routerLink="/client/orders" routerLinkActive="link-active" (click)="closeMenu()">Pedidos</a>
+        <a routerLink="/client/profile" routerLinkActive="link-active" (click)="closeMenu()">Perfil</a>
       }
 
       @if (currentUser()?.role === 'ADMIN') {
-        <a routerLink="/admin/requests" routerLinkActive="link-active">Solicitudes</a>
-        <a routerLink="/admin/orders" routerLinkActive="link-active">Pedidos</a>
-        <a routerLink="/admin/catalog" routerLinkActive="link-active">Productos</a>
-        <a routerLink="/admin/users" routerLinkActive="link-active">Usuarios</a>
+        <a routerLink="/admin/requests" routerLinkActive="link-active" (click)="closeMenu()">Solicitudes</a>
+        <a routerLink="/admin/orders" routerLinkActive="link-active" (click)="closeMenu()">Pedidos</a>
+        <a routerLink="/admin/catalog" routerLinkActive="link-active" (click)="closeMenu()">Productos</a>
+        <a routerLink="/admin/users" routerLinkActive="link-active" (click)="closeMenu()">Usuarios</a>
       }
     }
   </nav>
 
-  <div class="session-box">
+  <div class="session-box" [class.menu-open]="isMenuOpen()">
     @if (currentUser(); as user) {
       <span class="avatar-mini" aria-hidden="true">
         @if (user.avatar_url) {
@@ -62,7 +77,7 @@
       </div>
       <button class="logout-button" type="button" (click)="signOut()">Salir</button>
     } @else {
-      <a class="nav-cta" routerLink="/register">Crear cuenta</a>
+      <a class="nav-cta" routerLink="/register" (click)="closeMenu()">Crear cuenta</a>
     }
   </div>
 </header>
