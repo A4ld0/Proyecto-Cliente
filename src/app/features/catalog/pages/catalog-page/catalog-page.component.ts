@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService, CartService } from '../../../../core/services';
 
@@ -28,7 +28,9 @@ interface CatalogMaterial {
   styleUrl: './catalog-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CatalogPageComponent {
+export class CatalogPageComponent implements OnDestroy {
+  private readonly cartMessageDelay = 2600;
+  private cartMessageTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private readonly authService = inject(AuthService);
   private readonly cartService = inject(CartService);
   private readonly router = inject(Router);
@@ -138,6 +140,7 @@ export class CatalogPageComponent {
   readonly selectedColor = signal('Todos');
   readonly maxPrice = signal(300);
   readonly cartMessage = signal('');
+  readonly isCartMessageVisible = signal(false);
 
   readonly materialOptions = computed(() => [
     'Todos',
@@ -179,6 +182,10 @@ export class CatalogPageComponent {
     return count;
   });
 
+  ngOnDestroy(): void {
+    this.clearCartMessageTimeout();
+  }
+
   updateMaterial(material: string): void {
     this.selectedMaterial.set(material);
   }
@@ -210,7 +217,7 @@ export class CatalogPageComponent {
       priceFrom: product.priceFrom
     });
 
-    this.cartMessage.set(`${product.name} agregado al carrito.`);
+    this.showCartMessage(`${product.name} agregado al carrito.`);
   }
 
   removeCartItem(index: number): void {
@@ -219,7 +226,7 @@ export class CatalogPageComponent {
 
   clearCart(): void {
     this.cartService.clear();
-    this.cartMessage.set('');
+    this.hideCartMessage();
   }
 
   async quoteCart(): Promise<void> {
@@ -241,5 +248,33 @@ export class CatalogPageComponent {
 
   getSelectedProductColor(product: CatalogProduct): string {
     return product.colors.includes(this.selectedColor()) ? this.selectedColor() : product.colors[0];
+  }
+
+  private showCartMessage(message: string): void {
+    this.clearCartMessageTimeout();
+    this.cartMessage.set(message);
+    this.isCartMessageVisible.set(true);
+
+    this.cartMessageTimeoutId = setTimeout(() => {
+      this.hideCartMessage();
+    }, this.cartMessageDelay);
+  }
+
+  private hideCartMessage(): void {
+    this.isCartMessageVisible.set(false);
+
+    this.cartMessageTimeoutId = setTimeout(() => {
+      this.cartMessage.set('');
+      this.cartMessageTimeoutId = null;
+    }, 220);
+  }
+
+  private clearCartMessageTimeout(): void {
+    if (!this.cartMessageTimeoutId) {
+      return;
+    }
+
+    clearTimeout(this.cartMessageTimeoutId);
+    this.cartMessageTimeoutId = null;
   }
 }

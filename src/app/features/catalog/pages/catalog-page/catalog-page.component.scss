@@ -211,11 +211,21 @@
   color: #010101;
   font-weight: 800;
   justify-self: end;
+  opacity: 0;
   padding: 0.85rem 1rem;
   position: sticky;
   top: 104px;
+  transform: translateY(-10px) scale(0.98);
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
   width: fit-content;
   z-index: 5;
+}
+
+.cart-notice.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
 .products-grid {

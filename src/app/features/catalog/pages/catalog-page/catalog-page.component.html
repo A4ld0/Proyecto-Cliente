@@ -121,7 +121,9 @@
       </div>
 
       @if (cartMessage()) {
-        <div class="cart-notice">{{ cartMessage() }}</div>
+        <div class="cart-notice" [class.is-visible]="isCartMessageVisible()">
+          {{ cartMessage() }}
+        </div>
       }
 
       @if (filteredProducts().length > 0) {
