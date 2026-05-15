@@ -67,12 +67,57 @@
         <span>{{ selectedColor() }}</span>
         <span>Hasta ${{ maxPrice() }}</span>
       </div>
+
+      <div class="cart-widget" aria-label="Carrito de cotizacion">
+        <div class="cart-widget-header">
+          <div>
+            <span class="eyebrow">Carrito</span>
+            <h2>Cotizacion</h2>
+          </div>
+
+          <span class="cart-badge">{{ cartItemCount() }}</span>
+        </div>
+
+        @if (!isAuthenticated()) {
+          <p>Inicia sesion para agregar productos y convertirlos en solicitud.</p>
+          <a routerLink="/login">Iniciar sesion</a>
+        } @else if (cartItems().length) {
+          <div class="cart-widget-items">
+            @for (item of cartItems(); track item.name + item.material + item.color; let index = $index) {
+              <article class="cart-widget-item">
+                <div>
+                  <h3>{{ item.name }}</h3>
+                  <p>{{ item.quantity }} x {{ item.material }} / {{ item.color }}</p>
+                </div>
+
+                <button type="button" aria-label="Quitar producto" (click)="removeCartItem(index)">
+                  Quitar
+                </button>
+              </article>
+            }
+          </div>
+
+          <div class="cart-widget-total">
+            <span>Total estimado</span>
+            <strong>Desde ${{ cartEstimatedTotal() }} MXN</strong>
+          </div>
+
+          <div class="cart-widget-actions">
+            <button type="button" class="cart-secondary" (click)="clearCart()">Vaciar</button>
+            <button type="button" class="cart-primary" (click)="quoteCart()">Cotizar</button>
+          </div>
+        } @else {
+          <p>Tu carrito esta vacio. Agrega productos para solicitar una cotizacion.</p>
+        }
+      </div>
     </aside>
 
     <div class="catalog-results">
       <div class="results-bar">
         <p>{{ filteredProducts().length }} resultados disponibles</p>
-        <button type="button" (click)="quoteCart()">Cotizar carrito</button>
+        <button type="button" class="cart-shortcut" (click)="quoteCart()">
+          Carrito ({{ cartItemCount() }})
+        </button>
       </div>
 
       @if (cartMessage()) {
@@ -128,60 +173,6 @@
         </div>
       }
     </div>
-  </section>
-
-  <section class="cart-section" aria-label="Carrito de cotizacion">
-    <div class="section-heading">
-      <span class="eyebrow">Carrito</span>
-      <h2>Cotizacion desde catalogo</h2>
-    </div>
-
-    @if (!isAuthenticated()) {
-      <div class="locked-cart">
-        <h3>Inicia sesion para usar el carrito</h3>
-        <p>El carrito se conecta con tus solicitudes para que el equipo pueda revisar y cotizar.</p>
-        <a routerLink="/login">Iniciar sesion</a>
-      </div>
-    } @else if (cartItems().length) {
-      <div class="cart-panel">
-        <div class="cart-items">
-          @for (item of cartItems(); track item.name + item.material + item.color; let index = $index) {
-            <article class="cart-item">
-              <div>
-                <h3>{{ item.name }}</h3>
-                <p>{{ item.quantity }} x {{ item.material }} / {{ item.color }}</p>
-              </div>
-
-              <div class="cart-item-actions">
-                <span>${{ item.priceFrom * item.quantity }} MXN</span>
-                <button type="button" aria-label="Quitar producto" (click)="removeCartItem(index)">
-                  Quitar
-                </button>
-              </div>
-            </article>
-          }
-        </div>
-
-        <footer class="cart-footer">
-          <div>
-            <span>{{ cartItemCount() }} productos</span>
-            <strong>Desde ${{ cartEstimatedTotal() }} MXN</strong>
-          </div>
-
-          <div class="cart-actions">
-            <button type="button" class="cart-secondary" (click)="clearCart()">Vaciar</button>
-            <button type="button" class="cart-primary" (click)="quoteCart()">
-              Enviar a solicitudes
-            </button>
-          </div>
-        </footer>
-      </div>
-    } @else {
-      <div class="locked-cart">
-        <h3>Tu carrito esta vacio</h3>
-        <p>Agrega productos del catalogo para convertirlos en una solicitud de cotizacion.</p>
-      </div>
-    }
   </section>
 
   <section class="materials-section">

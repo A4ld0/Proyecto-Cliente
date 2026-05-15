@@ -76,8 +76,7 @@
 .filters-panel,
 .product-card,
 .material-card,
-.cart-panel,
-.locked-cart,
+.cart-widget,
 .empty-catalog {
   background: rgba(255, 255, 255, 0.055);
   border: 1px solid rgba(255, 255, 255, 0.11);
@@ -193,7 +192,8 @@
   font-weight: 700;
 }
 
-.results-bar button {
+.results-bar button,
+.cart-widget a {
   background: #ccf301;
   border-radius: 8px;
   color: #010101;
@@ -204,12 +204,18 @@
 }
 
 .cart-notice {
-  background: rgba(204, 243, 1, 0.1);
-  border: 1px solid rgba(204, 243, 1, 0.24);
+  background: #ccf301;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
-  color: #f2ffc0;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+  color: #010101;
   font-weight: 800;
+  justify-self: end;
   padding: 0.85rem 1rem;
+  position: sticky;
+  top: 104px;
+  width: fit-content;
+  z-index: 5;
 }
 
 .products-grid {
@@ -304,7 +310,7 @@
 .product-selection button,
 .cart-primary,
 .cart-secondary,
-.cart-item-actions button {
+.cart-widget-item button {
   border-radius: 8px;
   font-weight: 800;
   min-height: 40px;
@@ -318,102 +324,110 @@
 }
 
 .cart-secondary,
-.cart-item-actions button {
+.cart-widget-item button {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #ffffff;
 }
 
-.cart-section {
-  display: grid;
-  gap: 1rem;
-}
-
-.cart-panel,
-.locked-cart {
+.cart-widget {
   display: grid;
   gap: 1rem;
   padding: 1rem;
 }
 
-.locked-cart {
-  justify-items: start;
-}
-
-.locked-cart h3 {
-  font-size: 1.35rem;
-}
-
-.locked-cart p {
-  color: #bdbdb8;
-  line-height: 1.65;
-}
-
-.locked-cart a {
-  background: #ccf301;
-  border-radius: 8px;
-  color: #010101;
-  font-weight: 800;
-  padding: 0.75rem 1rem;
-  text-decoration: none;
-}
-
-.cart-items {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.cart-item {
-  align-items: center;
-  background: rgba(255, 255, 255, 0.045);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 8px;
+.cart-widget-header {
+  align-items: start;
   display: flex;
   gap: 1rem;
   justify-content: space-between;
+}
+
+.cart-widget-header h2 {
+  font-size: 1.25rem;
+  line-height: 1.1;
+}
+
+.cart-badge {
+  align-items: center;
+  background: #ccf301;
+  border-radius: 999px;
+  color: #010101;
+  display: inline-flex;
+  font-weight: 900;
+  height: 34px;
+  justify-content: center;
+  min-width: 34px;
+  padding: 0 0.55rem;
+}
+
+.cart-widget p {
+  color: #bdbdb8;
+  line-height: 1.55;
+}
+
+.cart-widget a {
+  justify-content: center;
+  text-align: center;
+}
+
+.cart-widget-items {
+  display: grid;
+  gap: 0.75rem;
+  max-height: 250px;
+  overflow: auto;
+  padding-right: 0.15rem;
+}
+
+.cart-widget-item {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
   padding: 0.85rem;
 }
 
-.cart-item h3 {
+.cart-widget-item h3 {
   font-size: 1rem;
+  line-height: 1.2;
 }
 
-.cart-item p {
+.cart-widget-item p {
   color: #bdbdb8;
   margin-top: 0.2rem;
 }
 
-.cart-item-actions,
-.cart-footer,
-.cart-actions {
+.cart-widget-total,
+.cart-widget-actions {
   align-items: center;
   display: flex;
   gap: 0.75rem;
 }
 
-.cart-item-actions span {
-  color: #ccf301;
-  font-weight: 900;
-}
-
-.cart-footer {
+.cart-widget-total {
   border-top: 1px solid rgba(255, 255, 255, 0.09);
   justify-content: space-between;
   padding-top: 1rem;
 }
 
-.cart-footer div:first-child {
-  display: grid;
-  gap: 0.2rem;
-}
-
-.cart-footer span {
+.cart-widget-total span {
   color: #bdbdb8;
 }
 
-.cart-footer strong {
+.cart-widget-total strong {
   color: #ffffff;
-  font-size: 1.35rem;
+  font-size: 1rem;
+  text-align: right;
+}
+
+.cart-widget-actions {
+  align-items: stretch;
+}
+
+.cart-widget-actions button {
+  flex: 1;
 }
 
 .empty-catalog {
@@ -507,8 +521,8 @@
 
   .results-bar,
   .product-selection,
-  .cart-item,
-  .cart-footer,
+  .cart-widget-item,
+  .cart-widget-total,
   .product-meta {
     align-items: stretch;
     flex-direction: column;
@@ -516,10 +530,17 @@
 
   .results-bar button,
   .product-selection button,
-  .cart-actions,
-  .cart-actions button {
+  .cart-widget-actions,
+  .cart-widget-actions button {
     text-align: center;
     width: 100%;
+  }
+
+  .cart-notice {
+    justify-self: stretch;
+    text-align: center;
+    top: 0.75rem;
+    width: auto;
   }
 
   .product-card {
