@@ -136,13 +136,6 @@ npm run build
 
 Los archivos compilados se generan en la carpeta `dist/`.
 
-## Pruebas
-
-Para ejecutar pruebas:
-
-```bash
-npm test
-```
 
 ## Estructura general
 
