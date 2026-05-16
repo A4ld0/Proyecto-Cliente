@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { firstValueFrom } from 'rxjs';
@@ -12,7 +12,9 @@ import {
   AuthService,
   OrderRealtimePayload,
   OrdersService,
+  QuoteRealtimePayload,
   QuotesService,
+  RequestRealtimePayload,
   RequestsService
 } from '../../../../core/services';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
@@ -30,7 +32,10 @@ export class ClientDashboardPageComponent implements OnDestroy {
   private readonly requestsService = inject(RequestsService);
   private readonly ordersService = inject(OrdersService);
   private readonly quotesService = inject(QuotesService);
+  private readonly zone = inject(NgZone);
   private ordersChannel: RealtimeChannel | null = null;
+  private requestsChannel: RealtimeChannel | null = null;
+  private quotesChannel: RealtimeChannel | null = null;
 
   readonly currentUser = this.authService.currentUser;
   readonly requests = signal<PrintRequest[]>([]);
@@ -61,6 +66,14 @@ export class ClientDashboardPageComponent implements OnDestroy {
     if (this.ordersChannel) {
       this.ordersService.removeRealtimeChannel(this.ordersChannel);
     }
+
+    if (this.requestsChannel) {
+      this.requestsService.removeRealtimeChannel(this.requestsChannel);
+    }
+
+    if (this.quotesChannel) {
+      this.quotesService.removeRealtimeChannel(this.quotesChannel);
+    }
   }
 
   async loadData(): Promise<void> {
@@ -88,6 +101,7 @@ export class ClientDashboardPageComponent implements OnDestroy {
       this.requests.set(requests);
       this.orders.set(orders);
       this.quotes.set(quotes);
+      this.subscribeToRealtime(user.id);
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'No pudimos cargar tu resumen por ahora.'));
     } finally {
@@ -106,9 +120,27 @@ export class ClientDashboardPageComponent implements OnDestroy {
       return;
     }
 
-    this.ordersChannel = this.ordersService.watchClientOrders(user.id, (payload) => {
-      this.applyOrderRealtimePayload(payload);
-    });
+    this.subscribeToRealtime(user.id);
+  }
+
+  private subscribeToRealtime(clientId: string): void {
+    if (!this.ordersChannel) {
+      this.ordersChannel = this.ordersService.watchClientOrders(clientId, (payload) => {
+        this.zone.run(() => this.applyOrderRealtimePayload(payload));
+      });
+    }
+
+    if (!this.requestsChannel) {
+      this.requestsChannel = this.requestsService.watchClientRequests(clientId, (payload) => {
+        this.zone.run(() => this.applyRequestRealtimePayload(payload));
+      });
+    }
+
+    if (!this.quotesChannel) {
+      this.quotesChannel = this.quotesService.watchQuotes((payload) => {
+        this.zone.run(() => this.applyQuoteRealtimePayload(payload));
+      });
+    }
   }
 
   private applyOrderRealtimePayload(payload: OrderRealtimePayload): void {
@@ -136,6 +168,65 @@ export class ClientDashboardPageComponent implements OnDestroy {
       }
 
       return orders.map((order) => (order.id === changedOrder.id ? changedOrder : order));
+    });
+  }
+
+  private applyRequestRealtimePayload(payload: RequestRealtimePayload): void {
+    if (payload.eventType === 'DELETE') {
+      const deletedId = payload.old['id'];
+
+      if (typeof deletedId === 'string') {
+        this.requests.update((requests) => requests.filter((request) => request.id !== deletedId));
+        this.quotes.update((quotes) => quotes.filter((quote) => quote.request_id !== deletedId));
+      }
+
+      return;
+    }
+
+    const changedRequest = payload.new as PrintRequest;
+
+    if (!changedRequest?.id) {
+      return;
+    }
+
+    this.requests.update((requests) => {
+      const exists = requests.some((request) => request.id === changedRequest.id);
+
+      if (!exists) {
+        return [changedRequest, ...requests];
+      }
+
+      return requests.map((request) =>
+        request.id === changedRequest.id ? changedRequest : request
+      );
+    });
+  }
+
+  private applyQuoteRealtimePayload(payload: QuoteRealtimePayload): void {
+    if (payload.eventType === 'DELETE') {
+      const deletedId = payload.old['id'];
+
+      if (typeof deletedId === 'string') {
+        this.quotes.update((quotes) => quotes.filter((quote) => quote.id !== deletedId));
+      }
+
+      return;
+    }
+
+    const changedQuote = payload.new as Quote;
+
+    if (!changedQuote?.id || !this.requests().some((request) => request.id === changedQuote.request_id)) {
+      return;
+    }
+
+    this.quotes.update((quotes) => {
+      const exists = quotes.some((quote) => quote.id === changedQuote.id);
+
+      if (!exists) {
+        return [changedQuote, ...quotes];
+      }
+
+      return quotes.map((quote) => (quote.id === changedQuote.id ? changedQuote : quote));
     });
   }
 }

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import { firstValueFrom } from 'rxjs';
 import {
   QUOTE_STATUS_LABELS,
@@ -8,7 +9,14 @@ import {
   REQUEST_STATUS_LABELS,
   REQUEST_TYPE_LABELS
 } from '../../../../core/constants/printlab.constants';
-import { AuthService, QuotesService, RequestsService, UsersService } from '../../../../core/services';
+import {
+  AuthService,
+  QuoteRealtimePayload,
+  QuotesService,
+  RequestRealtimePayload,
+  RequestsService,
+  UsersService
+} from '../../../../core/services';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import {
   getFieldErrorMessage,
@@ -31,11 +39,14 @@ import {
   styleUrl: './admin-requests-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AdminRequestsPageComponent {
+export class AdminRequestsPageComponent implements OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly quotesService = inject(QuotesService);
   private readonly requestsService = inject(RequestsService);
   private readonly usersService = inject(UsersService);
+  private readonly zone = inject(NgZone);
+  private requestsChannel: RealtimeChannel | null = null;
+  private quotesChannel: RealtimeChannel | null = null;
 
   readonly requests = signal<PrintRequest[]>([]);
   readonly quotes = signal<Quote[]>([]);
@@ -81,6 +92,16 @@ export class AdminRequestsPageComponent {
     void this.loadData();
   }
 
+  ngOnDestroy(): void {
+    if (this.requestsChannel) {
+      this.requestsService.removeRealtimeChannel(this.requestsChannel);
+    }
+
+    if (this.quotesChannel) {
+      this.quotesService.removeRealtimeChannel(this.quotesChannel);
+    }
+  }
+
   async loadData(): Promise<void> {
     this.isLoading.set(true);
     this.errorMessage.set('');
@@ -95,6 +116,7 @@ export class AdminRequestsPageComponent {
       this.requests.set(requests);
       this.quotes.set(quotes);
       this.users.set(users);
+      this.subscribeToRealtime();
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'No pudimos cargar las solicitudes.'));
     } finally {
@@ -239,5 +261,78 @@ export class AdminRequestsPageComponent {
       controlName,
       this.validationMessages[controlName] ?? {}
     );
+  }
+
+  private subscribeToRealtime(): void {
+    if (!this.requestsChannel) {
+      this.requestsChannel = this.requestsService.watchAllRequests((payload) => {
+        this.zone.run(() => this.applyRequestRealtimePayload(payload));
+      });
+    }
+
+    if (!this.quotesChannel) {
+      this.quotesChannel = this.quotesService.watchQuotes((payload) => {
+        this.zone.run(() => this.applyQuoteRealtimePayload(payload));
+      });
+    }
+  }
+
+  private applyRequestRealtimePayload(payload: RequestRealtimePayload): void {
+    if (payload.eventType === 'DELETE') {
+      const deletedId = payload.old['id'];
+
+      if (typeof deletedId === 'string') {
+        this.requests.update((requests) => requests.filter((request) => request.id !== deletedId));
+        this.quotes.update((quotes) => quotes.filter((quote) => quote.request_id !== deletedId));
+      }
+
+      return;
+    }
+
+    const changedRequest = payload.new as PrintRequest;
+
+    if (!changedRequest?.id) {
+      return;
+    }
+
+    this.requests.update((requests) => {
+      const exists = requests.some((request) => request.id === changedRequest.id);
+
+      if (!exists) {
+        return [changedRequest, ...requests];
+      }
+
+      return requests.map((request) =>
+        request.id === changedRequest.id ? changedRequest : request
+      );
+    });
+  }
+
+  private applyQuoteRealtimePayload(payload: QuoteRealtimePayload): void {
+    if (payload.eventType === 'DELETE') {
+      const deletedId = payload.old['id'];
+
+      if (typeof deletedId === 'string') {
+        this.quotes.update((quotes) => quotes.filter((quote) => quote.id !== deletedId));
+      }
+
+      return;
+    }
+
+    const changedQuote = payload.new as Quote;
+
+    if (!changedQuote?.id) {
+      return;
+    }
+
+    this.quotes.update((quotes) => {
+      const exists = quotes.some((quote) => quote.id === changedQuote.id);
+
+      if (!exists) {
+        return [changedQuote, ...quotes];
+      }
+
+      return quotes.map((quote) => (quote.id === changedQuote.id ? changedQuote : quote));
+    });
   }
 }

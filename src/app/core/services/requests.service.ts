@@ -1,6 +1,9 @@
 import { Injectable, inject } from '@angular/core';
+import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { PrintRequest, PrintRequestPayload } from '../../interfaces';
 import { SupabaseService } from './supabase.service';
+
+export type RequestRealtimePayload = RealtimePostgresChangesPayload<PrintRequest>;
 
 @Injectable({ providedIn: 'root' })
 export class RequestsService {
@@ -25,6 +28,44 @@ export class RequestsService {
 
   delete(id: string) {
     return this.supabase.delete<PrintRequest>(this.table, [{ column: 'id', value: id }]);
+  }
+
+  watchClientRequests(
+    clientId: string,
+    onChange: (payload: RequestRealtimePayload) => void
+  ): RealtimeChannel {
+    return this.supabase
+      .channel(`client-requests-${clientId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: this.table,
+          filter: `client_id=eq.${clientId}`
+        },
+        onChange
+      )
+      .subscribe();
+  }
+
+  watchAllRequests(onChange: (payload: RequestRealtimePayload) => void): RealtimeChannel {
+    return this.supabase
+      .channel('admin-requests')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: this.table
+        },
+        onChange
+      )
+      .subscribe();
+  }
+
+  removeRealtimeChannel(channel: RealtimeChannel): void {
+    this.supabase.removeChannel(channel);
   }
 
   uploadAttachment(requestId: string, file: File) {

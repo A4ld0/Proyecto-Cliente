@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, computed, inject, signal } from '@angular/core';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -28,6 +28,7 @@ export class ClientOrdersPageComponent implements OnDestroy {
   private readonly ordersService = inject(OrdersService);
   private readonly requestsService = inject(RequestsService);
   private readonly quotesService = inject(QuotesService);
+  private readonly zone = inject(NgZone);
   private ordersChannel: RealtimeChannel | null = null;
 
   readonly currentUser = this.authService.currentUser;
@@ -122,7 +123,7 @@ export class ClientOrdersPageComponent implements OnDestroy {
     }
 
     this.ordersChannel = this.ordersService.watchClientOrders(user.id, (payload) => {
-      this.applyOrderRealtimePayload(payload);
+      this.zone.run(() => this.applyOrderRealtimePayload(payload));
     });
   }
 

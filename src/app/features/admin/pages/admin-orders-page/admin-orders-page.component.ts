@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { firstValueFrom } from 'rxjs';
@@ -35,6 +35,7 @@ export class AdminOrdersPageComponent implements OnDestroy {
   private readonly quotesService = inject(QuotesService);
   private readonly requestsService = inject(RequestsService);
   private readonly usersService = inject(UsersService);
+  private readonly zone = inject(NgZone);
   private ordersChannel: RealtimeChannel | null = null;
 
   readonly orders = signal<Order[]>([]);
@@ -245,7 +246,7 @@ export class AdminOrdersPageComponent implements OnDestroy {
 
   private subscribeToOrdersRealtime(): void {
     this.ordersChannel = this.ordersService.watchAllOrders((payload) => {
-      this.applyOrderRealtimePayload(payload);
+      this.zone.run(() => this.applyOrderRealtimePayload(payload));
     });
   }
 

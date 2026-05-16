@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import { firstValueFrom } from 'rxjs';
 import {
   QUOTE_STATUS_LABELS,
@@ -8,7 +9,14 @@ import {
   REQUEST_TYPE_LABELS,
   REQUEST_TYPES
 } from '../../../../core/constants/printlab.constants';
-import { AuthService, CartService, QuotesService, RequestsService } from '../../../../core/services';
+import {
+  AuthService,
+  CartService,
+  QuoteRealtimePayload,
+  QuotesService,
+  RequestRealtimePayload,
+  RequestsService
+} from '../../../../core/services';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import {
   getFieldErrorMessage,
@@ -30,13 +38,16 @@ import {
   styleUrl: './client-requests-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ClientRequestsPageComponent {
+export class ClientRequestsPageComponent implements OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly cartService = inject(CartService);
   private readonly requestsService = inject(RequestsService);
   private readonly quotesService = inject(QuotesService);
+  private readonly zone = inject(NgZone);
   private readonly allowedAttachmentTypes = ['image/png', 'image/jpeg', 'image/webp', 'model/stl'];
   private readonly maxAttachmentSize = 20 * 1024 * 1024;
+  private requestsChannel: RealtimeChannel | null = null;
+  private quotesChannel: RealtimeChannel | null = null;
 
   readonly currentUser = this.authService.currentUser;
   readonly cartItems = this.cartService.items;
@@ -92,6 +103,16 @@ export class ClientRequestsPageComponent {
     void this.loadRequests();
   }
 
+  ngOnDestroy(): void {
+    if (this.requestsChannel) {
+      this.requestsService.removeRealtimeChannel(this.requestsChannel);
+    }
+
+    if (this.quotesChannel) {
+      this.quotesService.removeRealtimeChannel(this.quotesChannel);
+    }
+  }
+
   async loadRequests(): Promise<void> {
     const user = this.currentUser();
 
@@ -113,6 +134,7 @@ export class ClientRequestsPageComponent {
 
       this.requests.set(requests);
       this.quotes.set(quotes);
+      this.subscribeToRealtime(user.id);
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'No pudimos cargar tus solicitudes.'));
     } finally {
@@ -385,5 +407,78 @@ export class ClientRequestsPageComponent {
   clearCartDraft(): void {
     this.cartService.clear();
     this.resetForm();
+  }
+
+  private subscribeToRealtime(clientId: string): void {
+    if (!this.requestsChannel) {
+      this.requestsChannel = this.requestsService.watchClientRequests(clientId, (payload) => {
+        this.zone.run(() => this.applyRequestRealtimePayload(payload));
+      });
+    }
+
+    if (!this.quotesChannel) {
+      this.quotesChannel = this.quotesService.watchQuotes((payload) => {
+        this.zone.run(() => this.applyQuoteRealtimePayload(payload));
+      });
+    }
+  }
+
+  private applyRequestRealtimePayload(payload: RequestRealtimePayload): void {
+    if (payload.eventType === 'DELETE') {
+      const deletedId = payload.old['id'];
+
+      if (typeof deletedId === 'string') {
+        this.requests.update((requests) => requests.filter((request) => request.id !== deletedId));
+        this.quotes.update((quotes) => quotes.filter((quote) => quote.request_id !== deletedId));
+      }
+
+      return;
+    }
+
+    const changedRequest = payload.new as PrintRequest;
+
+    if (!changedRequest?.id) {
+      return;
+    }
+
+    this.requests.update((requests) => {
+      const exists = requests.some((request) => request.id === changedRequest.id);
+
+      if (!exists) {
+        return [changedRequest, ...requests];
+      }
+
+      return requests.map((request) =>
+        request.id === changedRequest.id ? changedRequest : request
+      );
+    });
+  }
+
+  private applyQuoteRealtimePayload(payload: QuoteRealtimePayload): void {
+    if (payload.eventType === 'DELETE') {
+      const deletedId = payload.old['id'];
+
+      if (typeof deletedId === 'string') {
+        this.quotes.update((quotes) => quotes.filter((quote) => quote.id !== deletedId));
+      }
+
+      return;
+    }
+
+    const changedQuote = payload.new as Quote;
+
+    if (!changedQuote?.id || !this.requests().some((request) => request.id === changedQuote.request_id)) {
+      return;
+    }
+
+    this.quotes.update((quotes) => {
+      const exists = quotes.some((quote) => quote.id === changedQuote.id);
+
+      if (!exists) {
+        return [changedQuote, ...quotes];
+      }
+
+      return quotes.map((quote) => (quote.id === changedQuote.id ? changedQuote : quote));
+    });
   }
 }
