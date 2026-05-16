@@ -41,7 +41,6 @@ FIGMA_LIBRARY_PLAN.md
 testem.log
 /typings
 __screenshots__/
-docs/capturas/
 
 # System files
 .DS_Store
