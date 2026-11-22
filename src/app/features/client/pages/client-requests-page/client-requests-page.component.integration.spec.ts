@@ -1,8 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { signal } from '@angular/core';
+import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { environment } from '../../../../../environments/environment';
+import { fileSelected, realtime } from '../../../../../testing/fixtures';
 import { AuthService, CartService, QuotesService, RequestsService, SupabaseService } from '../../../../core/services';
 import { Order, PrintRequest, Quote, User } from '../../../../interfaces';
 import { ClientRequestsPageComponent } from './client-requests-page.component';
@@ -35,6 +36,9 @@ describe('Integración de solicitudes del cliente', () => {
   let cart: CartService;
   let http: HttpTestingController;
   let fixture: ComponentFixture<ClientRequestsPageComponent>;
+  let currentUser: WritableSignal<User | null>;
+  let requestEvents: ReturnType<typeof realtime<PrintRequest>>;
+  let quoteEvents: ReturnType<typeof realtime<Quote>>;
 
   function expectRequestsList() {
     const request = http.expectOne(
@@ -63,11 +67,14 @@ describe('Integración de solicitudes del cliente', () => {
 
   beforeEach(async () => {
     localStorage.removeItem(cartKey);
+    currentUser = signal(user);
+    requestEvents = realtime<PrintRequest>('requests');
+    quoteEvents = realtime<Quote>('quotes');
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: AuthService, useValue: { currentUser: signal(user) } }
+        { provide: AuthService, useValue: { currentUser } }
       ]
     });
     http = TestBed.inject(HttpTestingController);
@@ -76,9 +83,15 @@ describe('Integración de solicitudes del cliente', () => {
 
     const supabase = TestBed.inject(SupabaseService);
     vi.spyOn(TestBed.inject(RequestsService), 'watchClientRequests')
-      .mockReturnValue(supabase.channel('test-requests'));
+      .mockImplementation((id, listener) => {
+        requestEvents.watchForUser(id, listener);
+        return supabase.channel('test-requests');
+      });
     vi.spyOn(TestBed.inject(QuotesService), 'watchQuotes')
-      .mockReturnValue(supabase.channel('test-quotes'));
+      .mockImplementation((listener) => {
+        quoteEvents.watch(listener);
+        return supabase.channel('test-quotes');
+      });
 
     fixture = TestBed.createComponent(ClientRequestsPageComponent);
     expectRequestsList().flush([]);
@@ -87,6 +100,7 @@ describe('Integración de solicitudes del cliente', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     http.verify();
     localStorage.removeItem(cartKey);
   });
@@ -257,6 +271,127 @@ describe('Integración de solicitudes del cliente', () => {
     expect(component.quoteForRequest(quotedRequest.id)?.status).toBe('ACCEPTED');
     expect(confirm).toHaveBeenCalledTimes(1);
     http.expectNone((candidate) => candidate.method === 'POST');
+  });
+
+  it('valida el formulario y la sesión antes de enviar o consultar y permite limpiar el carrito', async () => {
+    const component = fixture.componentInstance;
+    component.resetForm();
+    await component.submit();
+    expect(component.hasFieldError('title')).toBe(true);
+    expect(component.getFieldError('title')).toContain('titulo');
+    expect(component.getFieldError('unknown')).toBe('');
+    component.prefillFromCart();
+    currentUser.set(null);
+    await component.submit();
+    expect(component.errorMessage()).toContain('guardar la solicitud');
+    await component.loadRequests();
+    expect(component.errorMessage()).toContain('administrar tus solicitudes');
+    expect(component.isLoading()).toBe(false);
+    http.expectNone((candidate) => candidate.url === `${restUrl}/requests`);
+    component.clearCartDraft();
+    component.prefillFromCart();
+    expect(cart.items()).toEqual([]);
+    expect(component.form.controls.title.value).toBe('');
+  });
+
+  it('conserva el borrador al editar, valida adjuntos y actualiza una solicitud existente', async () => {
+    const page = fixture.componentInstance;
+    const existing: PrintRequest = { ...quotedRequest, status: 'PENDING', attachment_kind: 'IMAGE' };
+    page.editRequest(existing);
+    expect(page.canEditRequest(existing)).toBe(true);
+    expect(page.canEditRequest(quotedRequest)).toBe(false);
+    expect(page.canCancelRequest(existing)).toBe(false);
+    expect(page.canCancelRequest(quotedRequest)).toBe(true);
+    page.prefillFromCart();
+    expect(page.form.controls.title.value).toBe(existing.title);
+    expect(page.selectedAttachmentPreview()).toBe('');
+    page.onAttachmentSelected(fileSelected());
+    page.onAttachmentSelected(fileSelected(new File(['pdf'], 'example.pdf', { type: 'application/pdf' })));
+    expect(page.errorMessage()).toContain('archivo STL');
+    page.onAttachmentSelected(fileSelected(new File([new Uint8Array(20 * 1024 * 1024 + 1)], 'large.stl')));
+    expect(page.errorMessage()).toContain('20 MB');
+
+    const image = new File(['image'], 'sample.png', { type: 'image/png' });
+    vi.stubGlobal('URL', Object.assign(class extends URL {}, { createObjectURL: () => 'blob:reference' }));
+    page.onAttachmentSelected(fileSelected(image));
+    expect(page.attachmentKind(image)).toBe('IMAGE');
+    expect(page.selectedAttachmentPreview()).toBe('blob:reference');
+    page.form.controls.description.setValue('Descripción de la pieza modificada.');
+    const submission = page.submit();
+    const upload = http.expectOne((candidate) => candidate.method === 'PUT' && candidate.url.includes(existing.id));
+    expect(upload.request.headers.get('Content-Type')).toBe('image/png');
+    upload.flush({});
+    const patch = await vi.waitFor(() => http.expectOne((candidate) => candidate.method === 'PATCH'));
+    expect(patch.request.params.get('id')).toBe(`eq.${existing.id}`);
+    expect(patch.request.body).toMatchObject({
+      description: 'Descripción de la pieza modificada.', attachment_kind: 'IMAGE', attachment_name: image.name
+    });
+    patch.flush([{ ...existing, ...patch.request.body }]);
+    await Promise.resolve();
+    expectRequestsList().flush([]);
+    await submission;
+    expect(cart.itemCount()).toBe(1);
+    expect(page.editingId()).toBeNull();
+    expect(page.successMessage()).toContain('actualizo correctamente');
+  });
+
+  it.each([
+    ['elimina', 'DELETE', 'deleteRequest'],
+    ['cancela', 'PATCH', 'cancelRequest']
+  ] as const)('%s únicamente si se confirma la acción y maneja fallos de la API', async (_label, method, action) => {
+    const page = fixture.componentInstance;
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValue(true);
+    await page[action](quotedRequest);
+    http.expectNone((candidate) => candidate.method === method);
+    const failed = page[action](quotedRequest);
+    http.expectOne((candidate) => candidate.method === method).flush(
+      { message: 'Operación rechazada.' },
+      { status: 403, statusText: 'Forbidden' }
+    );
+    await failed;
+    expect(page.errorMessage()).toBe('Operación rechazada.');
+    page.editRequest(quotedRequest);
+    const succeeded = page[action](quotedRequest);
+    const mutation = http.expectOne((candidate) => candidate.method === method);
+    expect(mutation.request.params.get('id')).toBe(`eq.${quotedRequest.id}`);
+    if (method === 'PATCH') {
+      expect(mutation.request.body).toEqual({ status: 'CANCELED' });
+    }
+    mutation.flush([quotedRequest]);
+    await Promise.resolve();
+    expectRequestsList().flush([]);
+    await succeeded;
+    expect(confirm).toHaveBeenCalledTimes(3);
+    expect(page.editingId()).toBeNull();
+    expect(page.successMessage()).toContain('correctamente');
+  });
+
+  it('actualiza registros por eventos y descarta cotizaciones de solicitudes ajenas', async () => {
+    const page = fixture.componentInstance;
+    quoteEvents.insert(sentQuote);
+    expect(page.quotes()).toEqual([]);
+    requestEvents.insert(quotedRequest);
+    requestEvents.update({ ...quotedRequest, status: 'CANCELED' });
+    const another = { ...quotedRequest, id: 'another-request' };
+    requestEvents.insert(another);
+    quoteEvents.insert(sentQuote);
+    const secondQuote = { ...sentQuote, id: 'second-quote', request_id: another.id };
+    quoteEvents.insert(secondQuote);
+    quoteEvents.update({ ...sentQuote, status: 'REJECTED' });
+    expect(page.quoteForRequest(quotedRequest.id)?.status).toBe('REJECTED');
+    expect(page.statusClass('CANCELED')).toBe('danger');
+    expect(page.statusClass('IN_REVIEW')).toBe('warn');
+    expect(page.statusClass('CLOSED')).toBe('');
+    requestEvents.insert({ ...quotedRequest, id: '' });
+    quoteEvents.insert({ ...sentQuote, id: '' });
+    requestEvents.delete();
+    quoteEvents.delete();
+    expect(page.requests()).toHaveLength(2);
+    expect(page.quotes()).toHaveLength(2);
+    requestEvents.delete(quotedRequest.id);
+    quoteEvents.delete(secondQuote.id);
+    expect(page.requests()).toEqual([another]);
+    expect(page.quotes()).toEqual([]);
   });
 
   it.each(['carga', 'asociación'] as const)(

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 const metrics = ['lines', 'statements', 'functions', 'branches'];
+const minimumCoverage = 90n;
 
 function readCoverage(path) {
   const { total } = JSON.parse(readFileSync(path, 'utf8'));
@@ -52,14 +53,23 @@ try {
       metric,
       base: label(base[metric]),
       pullRequest: label(pullRequest[metric]),
-      decreased: prCovered * baseTotal < baseCovered * prTotal
+      decreased: prCovered * baseTotal < baseCovered * prTotal,
+      belowMinimum: prCovered * 100n < minimumCoverage * prTotal
     };
   });
 
   console.table(results);
   const decreases = results.filter(({ decreased }) => decreased).map(({ metric }) => metric);
+  const belowMinimum = results.filter((result) => result.belowMinimum).map(({ metric }) => metric);
+  const failures = [];
   if (decreases.length > 0) {
-    throw new Error(`Coverage decreased for ${decreases.join(', ')}.`);
+    failures.push(`Coverage decreased for ${decreases.join(', ')}.`);
+  }
+  if (belowMinimum.length > 0) {
+    failures.push(`Coverage is below ${minimumCoverage}% for ${belowMinimum.join(', ')}.`);
+  }
+  if (failures.length > 0) {
+    throw new Error(failures.join('\n'));
   }
 } catch (error) {
   console.error(error.message);

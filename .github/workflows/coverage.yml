@@ -52,7 +52,7 @@ jobs:
 
           (cd tmp/coverage-base && npm test -- "${coverage_args[@]}")
           npm test -- "${coverage_args[@]}"
-      - name: Fail if coverage decreased
+      - name: Check coverage regressions and the 90% minimum
         run: >-
           node scripts/check-coverage.mjs
           tmp/coverage-base/coverage/printlab/coverage-summary.json
