@@ -26,6 +26,7 @@
     "@angular/build": "^21.2.3",
     "@angular/cli": "^21.2.3",
     "@angular/compiler-cli": "^21.2.0",
+    "@vitest/coverage-v8": "4.1.0",
     "angular-eslint": "^21.4.0",
     "eslint": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
