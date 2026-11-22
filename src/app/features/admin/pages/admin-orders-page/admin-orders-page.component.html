@@ -81,8 +81,9 @@
         </div>
 
         <div class="field">
-          <label>Total cotizado</label>
+          <label for="quote_total">Total cotizado</label>
           <input
+            id="quote_total"
             type="text"
             [value]="quoteTotal(form.controls.quote_id.getRawValue()) | currency: 'MXN'"
             readonly
