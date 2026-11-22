@@ -48,6 +48,13 @@ export class ClientRequestsPageComponent implements OnDestroy {
   private readonly maxAttachmentSize = 20 * 1024 * 1024;
   private requestsChannel: RealtimeChannel | null = null;
   private quotesChannel: RealtimeChannel | null = null;
+  private pendingRequestId: string | null = null;
+  private attachmentUpload: {
+    requestId: string;
+    file: File;
+    upload: ReturnType<RequestsService['uploadAttachment']>;
+    uploaded: boolean;
+  } | null = null;
 
   readonly currentUser = this.authService.currentUser;
   readonly cartItems = this.cartService.items;
@@ -143,6 +150,7 @@ export class ClientRequestsPageComponent implements OnDestroy {
   }
 
   editRequest(request: PrintRequest): void {
+    this.clearPendingAttachment();
     this.editingId.set(request.id);
     this.successMessage.set('');
     this.selectedAttachment.set(null);
@@ -157,6 +165,7 @@ export class ClientRequestsPageComponent implements OnDestroy {
   }
 
   resetForm(): void {
+    this.clearPendingAttachment();
     this.editingId.set(null);
     this.selectedAttachment.set(null);
     this.selectedAttachmentPreview.set('');
@@ -198,6 +207,10 @@ export class ClientRequestsPageComponent implements OnDestroy {
   }
 
   async submit(): Promise<void> {
+    if (this.isSaving()) {
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -221,26 +234,41 @@ export class ClientRequestsPageComponent implements OnDestroy {
       request_type: rawValue.request_type as RequestType,
       client_id: user.id
     };
+    const editingId = this.editingId();
+    const existingId = editingId ?? this.pendingRequestId;
+    const file = this.selectedAttachment();
 
     try {
-      if (this.editingId()) {
-        const attachmentPayload = await this.buildAttachmentPayload(this.editingId()!);
-        await firstValueFrom(
-          this.requestsService.update(this.editingId()!, { ...payload, ...attachmentPayload })
-        );
-        this.successMessage.set('La solicitud se actualizo correctamente.');
-      } else {
-        const createPayload: PrintRequestPayload = {
+      let requestId = existingId;
+      if (!requestId) {
+        const [createdRequest] = await firstValueFrom(this.requestsService.create({
           ...payload,
           status: 'PENDING'
-        };
-        const [createdRequest] = await firstValueFrom(this.requestsService.create(createPayload));
+        }));
 
-        if (createdRequest && this.selectedAttachment()) {
-          const attachmentPayload = await this.buildAttachmentPayload(createdRequest.id);
-          await firstValueFrom(this.requestsService.update(createdRequest.id, attachmentPayload));
+        if (!createdRequest?.id) {
+          throw new Error('No se pudo confirmar que la solicitud se haya registrado.');
         }
 
+        requestId = createdRequest.id;
+        if (file) {
+          this.pendingRequestId = requestId;
+        }
+      }
+
+      if (existingId || file) {
+        const attachment = file ? await this.buildAttachmentPayload(requestId, file) : {};
+        const updatedFields = existingId ? { ...payload, ...attachment } : attachment;
+        const [updated] = await firstValueFrom(this.requestsService.update(requestId, updatedFields));
+
+        if (!updated) {
+          throw new Error('No se pudo confirmar la actualización de la solicitud.');
+        }
+      }
+
+      if (editingId) {
+        this.successMessage.set('La solicitud se actualizo correctamente.');
+      } else {
         this.successMessage.set('Tu solicitud se registro correctamente.');
         this.cartService.clear();
       }
@@ -248,7 +276,10 @@ export class ClientRequestsPageComponent implements OnDestroy {
       this.resetForm();
       await this.loadRequests();
     } catch (error) {
-      this.errorMessage.set(getApiErrorMessage(error, 'No pudimos guardar la solicitud.'));
+      const message = getApiErrorMessage(error, 'No pudimos guardar la solicitud.');
+      this.errorMessage.set(this.pendingRequestId
+        ? `La solicitud se guardó. Vuelve a enviar el formulario para completar el adjunto. ${message}`
+        : message);
     } finally {
       this.isSaving.set(false);
     }
@@ -266,7 +297,7 @@ export class ClientRequestsPageComponent implements OnDestroy {
       await firstValueFrom(this.requestsService.delete(request.id));
       this.successMessage.set('La solicitud se elimino correctamente.');
 
-      if (this.editingId() === request.id) {
+      if (this.editingId() === request.id || this.pendingRequestId === request.id) {
         this.resetForm();
       }
 
@@ -288,7 +319,7 @@ export class ClientRequestsPageComponent implements OnDestroy {
       await firstValueFrom(this.requestsService.update(request.id, { status: 'CANCELED' }));
       this.successMessage.set('La solicitud se cancelo correctamente.');
 
-      if (this.editingId() === request.id) {
+      if (this.editingId() === request.id || this.pendingRequestId === request.id) {
         this.resetForm();
       }
 
@@ -299,7 +330,7 @@ export class ClientRequestsPageComponent implements OnDestroy {
   }
 
   async acceptQuote(quote: Quote): Promise<void> {
-    if (!window.confirm('Deseas aceptar esta cotizacion y crear el pedido?')) {
+    if (!this.canDecideQuote(quote) || !window.confirm('Deseas aceptar esta cotizacion y crear el pedido?')) {
       return;
     }
 
@@ -309,6 +340,7 @@ export class ClientRequestsPageComponent implements OnDestroy {
 
     try {
       await firstValueFrom(this.quotesService.acceptQuote(quote.id));
+      this.setQuoteDecision(quote.id, 'ACCEPTED');
       this.successMessage.set('Cotizacion aceptada. Tu pedido se creo correctamente.');
       await this.loadRequests();
     } catch (error) {
@@ -319,7 +351,7 @@ export class ClientRequestsPageComponent implements OnDestroy {
   }
 
   async rejectQuote(quote: Quote): Promise<void> {
-    if (!window.confirm('Deseas rechazar esta cotizacion?')) {
+    if (!this.canDecideQuote(quote) || !window.confirm('Deseas rechazar esta cotizacion?')) {
       return;
     }
 
@@ -329,6 +361,7 @@ export class ClientRequestsPageComponent implements OnDestroy {
 
     try {
       await firstValueFrom(this.quotesService.rejectQuote(quote.id));
+      this.setQuoteDecision(quote.id, 'REJECTED');
       this.successMessage.set('Cotizacion rechazada correctamente.');
       await this.loadRequests();
     } catch (error) {
@@ -374,18 +407,39 @@ export class ClientRequestsPageComponent implements OnDestroy {
     return ['IN_REVIEW', 'QUOTED'].includes(request.status);
   }
 
-  private async buildAttachmentPayload(requestId: string): Promise<Partial<PrintRequestPayload>> {
-    const file = this.selectedAttachment();
+  private canDecideQuote(quote: Quote): boolean {
+    const current = this.quoteForRequest(quote.request_id);
+    return !this.isSaving() && !this.quoteActionId() && current?.id === quote.id && current.status === 'SENT';
+  }
 
-    if (!file) {
-      return {};
+  private setQuoteDecision(quoteId: string, status: 'ACCEPTED' | 'REJECTED'): void {
+    this.quotes.update((quotes) => quotes.map((quote) => quote.id === quoteId ? { ...quote, status } : quote));
+  }
+
+  private clearPendingAttachment(): void {
+    this.pendingRequestId = null;
+    this.attachmentUpload = null;
+  }
+
+  private async buildAttachmentPayload(requestId: string, file: File): Promise<Partial<PrintRequestPayload>> {
+    let cached = this.attachmentUpload;
+    if (cached?.requestId !== requestId || cached.file !== file) {
+      cached = {
+        requestId,
+        file,
+        upload: this.requestsService.uploadAttachment(requestId, file),
+        uploaded: false
+      };
+      this.attachmentUpload = cached;
     }
 
-    const upload = this.requestsService.uploadAttachment(requestId, file);
-    await firstValueFrom(upload.request);
+    if (!cached.uploaded) {
+      await firstValueFrom(cached.upload.request);
+      cached.uploaded = true;
+    }
 
     return {
-      attachment_url: `${upload.url}?v=${Date.now()}`,
+      attachment_url: `${cached.upload.url}?v=${Date.now()}`,
       attachment_name: file.name,
       attachment_type: this.requestsService.getAttachmentContentType(file),
       attachment_kind: this.attachmentKind(file)
@@ -393,7 +447,7 @@ export class ClientRequestsPageComponent implements OnDestroy {
   }
 
   prefillFromCart(): void {
-    if (!this.cartItems().length || this.editingId()) {
+    if (!this.cartItems().length || this.editingId() || this.pendingRequestId) {
       return;
     }
 
