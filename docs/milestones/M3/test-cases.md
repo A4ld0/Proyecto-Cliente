@@ -113,15 +113,16 @@ A4 permite acceso. El resultado del guard se complementa con API real en TC-028.
 ## TC-008 — Catálogo, filtros y ausencia de resultados
 
 **Requisito:** RF-04. **Técnica:** EP. **Prioridad:** A.
-**Precondición:** catálogo de pruebas con P1 activo, otro producto activo de categoría distinta y uno inactivo; respuesta normal de API.
-**Datos:** búsqueda por parte del nombre de P1, categoría de P1 y texto `sin-coincidencia-qa`.
+**Precondición:** catálogo de pruebas con P1 activo, otro producto activo con material/color diferentes y uno inactivo; respuesta normal de API.
+**Datos:** P1 PLA/PETG y Negro/Blanco a $120; filtros PETG, Blanco y precio máximo 119/120.
 
 1. Abrir `/catalogo` y comprobar productos visibles y datos de referencia.
-2. Filtrar por nombre y luego categoría; probar su combinación.
-3. Buscar el texto sin coincidencias y limpiar los filtros.
+2. Filtrar por material y color; comprobar las combinaciones con y sin coincidencias.
+3. Fijar máximo 119, luego 120 y finalmente restablecer los filtros.
 
 **Esperado:** solo productos activos del catálogo cargado; filtros reducen las
-coincidencias; estado vacío sin errores cuando no hay resultados; limpiar restaura
+coincidencias; máximo 119 excluye P1 y 120 lo incluye; estado vacío sin errores
+cuando no hay resultados; limpiar restaura
 la lista. Un catálogo de respaldo no acredita persistencia del catálogo remoto.
 **Registro:** Pendiente.
 
