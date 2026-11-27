@@ -6,6 +6,10 @@ PrintLab 3D es una aplicación web para cotizar y gestionar trabajos de impresi�
 
 El flujo comienza con una solicitud, que puede partir del catálogo o incluir un archivo de referencia. Un administrador prepara la cotización. El cliente puede aceptarla para generar un pedido o rechazarla desde su panel.
 
+La entrega de pruebas se organiza en la [matriz de cumplimiento](docs/rubrica.md), con base en
+la [rúbrica original](docs/rubricas/README.md) y los hitos de la materia. El [plan del equipo](docs/implementacion.md)
+asigna los roles provisionales de Integrante 1–5 y la entrega del 2 de diciembre de 2026.
+
 ## Requerimientos
 
 ### Funcionales
@@ -33,6 +37,9 @@ Los paneles requieren una cuenta activa con el rol `CLIENT` o `ADMIN`, según la
 | Supabase y PostgreSQL | Autenticación, persistencia, archivos y actualizaciones en tiempo real. |
 | Angular CLI y npm | Instalación, servidor local, compilación y ejecución de pruebas. |
 | Vitest y jsdom | Pruebas de Angular en un entorno de navegador simulado. |
+| V8 y `@vitest/coverage-v8` | Medición de líneas, sentencias, funciones y ramas del frontend. |
+| Playwright y playwright-bdd | Escenarios Gherkin en Chromium y reportes HTML/JUnit. |
+| Node.js test runner | Verificación automática del comparador de cobertura. |
 | ESLint, Angular ESLint y Prettier | Reglas de análisis estático y formato. |
 | Git y GitHub | Control de versiones y revisión por pull request. |
 | Vercel | Reescribe las rutas para que Angular las resuelva desde `index.html`. |
@@ -46,8 +53,8 @@ Las versiones declaradas están en [`package.json`](package.json) y la instalaci
 | Tipo | Paquetes principales |
 | --- | --- |
 | Aplicación | `@angular/core`, `@angular/common`, `@angular/compiler`, `@angular/forms`, `@angular/platform-browser` y `@angular/router` para el frontend. `@supabase/supabase-js` para la conexión con Supabase. `rxjs` y `tslib` para operaciones asíncronas y utilidades de TypeScript. El manifiesto también declara el paquete `angular` de AngularJS. |
-| Compilación y pruebas | `@angular/cli`, `@angular/build`, `@angular/compiler-cli`, `typescript`, `vitest` y `jsdom`. |
-| Análisis y formato | `eslint`, `angular-eslint`, `typescript-eslint`, `eslint-config-prettier` y `prettier`. |
+| Compilación y pruebas | `@angular/cli`, `@angular/build`, `@angular/compiler-cli`, `typescript`, `vitest`, `jsdom`, `@vitest/coverage-v8`, `@playwright/test` y `playwright-bdd`. |
+| Análisis y formato | `eslint`, `@eslint/js`, `angular-eslint`, `typescript-eslint`, `eslint-config-prettier` y `prettier`. |
 
 ## Cómo correr la aplicación
 
@@ -71,11 +78,24 @@ Las versiones declaradas están en [`package.json`](package.json) y la instalaci
 Usa estos comandos para ejecutar las pruebas una vez y generar la compilación de producción.
 
 ```bash
-npm test -- --watch=false
+npm run lint
+npm run test:ci
+npm run test:coverage-guard
+npm run test:coverage
+npx playwright install --only-shell chromium
+npm run test:system
 npm run build
 ```
 
 La compilación de producción se guarda en `dist/printlab/browser/`. [Configuración de Angular](angular.json)
+
+La [guía de pruebas](docs/pruebas.md) explica qué integra cada suite, cómo generar los reportes
+y qué verificaciones todavía requieren una instancia real de Supabase para pruebas.
+
+## Imágenes de las vistas
+
+El [README muestra las 14 capturas](README.md#capturas-para-documentacion) de las pantallas
+públicas, cliente y administrador. Los archivos se encuentran versionados en [docs/capturas](docs/capturas/).
 
 ## Cómo contribuir
 

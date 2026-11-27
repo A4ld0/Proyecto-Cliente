@@ -4,6 +4,13 @@ PrintLab 3D es una aplicacion web para gestionar servicios de impresion 3D, soli
 
 El sistema esta orientado a digitalizar el flujo de trabajo entre cliente y administrador: el cliente consulta el catalogo, crea solicitudes y da seguimiento a sus pedidos; el administrador revisa solicitudes, gestiona productos, usuarios y estados del proceso.
 
+## Documentación y entrega de pruebas
+
+- [Documentación del proyecto](DOCUMENTACION.md): descripción, requerimientos, herramientas, dependencias, ejecución, contribución, estructura e imágenes.
+- [Rúbrica original de 30 puntos](docs/rubricas/README.md) y [matriz de cumplimiento](docs/rubrica.md).
+- [Plan, roles del equipo y cronograma](docs/implementacion.md). Entrega: **2 de diciembre de 2026**.
+- [Cómo ejecutar las pruebas y consultar reportes](docs/pruebas.md).
+
 ## Entrega
 
 - Demo completa del sistema.
@@ -70,7 +77,7 @@ Las imagenes del catalogo se almacenan en un bucket de Supabase Storage. La base
 
 ## Capturas para documentacion
 
-Las capturas se guardan localmente en `docs/capturas/`. Esta carpeta esta excluida de Git porque contiene imagenes generadas para la documentacion final.
+Las 14 capturas de `docs/capturas/` están versionadas en este repositorio y muestran las vistas públicas, de cliente y de administración.
 
 ### Pantallas publicas
 
@@ -111,7 +118,7 @@ Las capturas se guardan localmente en `docs/capturas/`. Esta carpeta esta exclui
 Instalar dependencias:
 
 ```bash
-npm install
+npm ci
 ```
 
 Iniciar servidor local:

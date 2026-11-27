@@ -17,4 +17,16 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
-      - run: npm test -- --watch=false
+      - name: Verify the coverage regression guard
+        run: npm run test:coverage-guard
+      - name: Run unit and frontend integration tests
+        run: npm run test:ci -- --reporters=junit --reporters=default --output-file=tmp/unit-results.xml
+      - name: Save test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: unit-and-integration-results
+          path: tmp/unit-results.xml
+          retention-days: 14
+      - name: Build the application
+        run: npm run build
