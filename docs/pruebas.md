@@ -24,6 +24,7 @@ Los comandos de la siguiente tabla pueden ejecutarse sin esa instancia.
 | --- | --- | --- |
 | `npm run lint` | TypeScript y plantillas con ESLint y Angular ESLint. | Salida de consola; falla ante infracciones. |
 | `npm run test:ci` | Pruebas unitarias e integraciones del frontend, una vez. | Resultado de Vitest. |
+| `npm run test:system:check` | TypeScript de Page Objects, steps, fixtures y configuración BDD. | Falla ante errores de tipos. |
 | `npm run test:coverage-guard` | Contrato del comparador: disminuciones, mínimo exacto, precisión e informes inválidos. | Pruebas de Node.js independientes de Angular. |
 | `npm run test:coverage` | Suite completa y cobertura de `src/app/**/*.ts`, excluyendo tests. | HTML, JSON y LCOV en `coverage/printlab/`. |
 | `npm run test:system` | Escenarios Gherkin de la interfaz Angular en Chromium. | HTML en `tmp/system-report/index.html`; JUnit en `tmp/system-results.xml`. |

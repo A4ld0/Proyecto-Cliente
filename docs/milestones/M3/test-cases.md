@@ -114,14 +114,14 @@ A4 permite acceso. El resultado del guard se complementa con API real en TC-028.
 
 **Requisito:** RF-04. **Técnica:** EP. **Prioridad:** A.
 **Precondición:** catálogo de pruebas con P1 activo, otro producto activo con material/color diferentes y uno inactivo; respuesta normal de API.
-**Datos:** P1 PLA/PETG y Negro/Blanco a $120; filtros PETG, Blanco y precio máximo 119/120.
+**Datos:** P1 PLA/PETG y Negro/Blanco a $120; filtros PETG, Blanco y precio máximo 110/120 (paso del control: $10).
 
 1. Abrir `/catalogo` y comprobar productos visibles y datos de referencia.
 2. Filtrar por material y color; comprobar las combinaciones con y sin coincidencias.
-3. Fijar máximo 119, luego 120 y finalmente restablecer los filtros.
+3. Fijar máximo 110, luego 120 y finalmente restablecer los filtros.
 
 **Esperado:** solo productos activos del catálogo cargado; filtros reducen las
-coincidencias; máximo 119 excluye P1 y 120 lo incluye; estado vacío sin errores
+coincidencias; máximo 110 excluye P1 y 120 lo incluye; estado vacío sin errores
 cuando no hay resultados; limpiar restaura
 la lista. Un catálogo de respaldo no acredita persistencia del catálogo remoto.
 **Registro:** Pendiente.

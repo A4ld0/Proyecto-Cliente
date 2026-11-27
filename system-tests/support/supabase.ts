@@ -152,6 +152,14 @@ export async function mockSupabase(page: Page) {
         orders.push(order);
         return reply(order);
       }
+      case 'POST /rest/v1/rpc/reject_quote': {
+        const { p_quote_id } = incoming.postDataJSON();
+        const quote = quotes.find((row) => row.id === p_quote_id && row.status === 'SENT');
+        const request = visibleRequests.find((row) => row.id === quote?.request_id);
+        if (user.role !== 'CLIENT' || !quote || !request) return forbidden();
+        quote.status = 'REJECTED';
+        return reply(quote);
+      }
       case 'GET /rest/v1/orders':
         return reply(orders.filter((order) => user.role === 'ADMIN' || order.client_id === user.id));
       default:
@@ -159,15 +167,31 @@ export async function mockSupabase(page: Page) {
     }
   });
 
+  function seedPendingRequest(title: string): PrintRequest {
+    const request: PrintRequest = {
+      id: `system-request-${requests.length + 1}`,
+      client_id: accounts.cliente.id,
+      title,
+      description: 'Pieza funcional a partir de un diseño de referencia.',
+      request_type: 'GENERAL_3D',
+      status: 'PENDING'
+    };
+    requests.push(request);
+    return request;
+  }
+
   return {
-    seedPendingRequest(title: string) {
-      requests.push({
-        id: `system-request-${requests.length + 1}`,
-        client_id: accounts.cliente.id,
-        title,
-        description: 'Pieza funcional a partir de un diseño de referencia.',
-        request_type: 'GENERAL_3D',
-        status: 'PENDING'
+    seedPendingRequest,
+    seedSentQuote(title: string) {
+      const request = seedPendingRequest(title);
+      request.status = 'QUOTED';
+      quotes.push({
+        id: `system-quote-${quotes.length + 1}`,
+        request_id: request.id,
+        admin_id: accounts.administrador.id,
+        price_total: 180,
+        estimated_days: 3,
+        status: 'SENT'
       });
     }
   };

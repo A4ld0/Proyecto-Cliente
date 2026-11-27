@@ -1,163 +1,106 @@
-import { expect, type Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { createBdd, test as base } from 'playwright-bdd';
-import { accounts, mockSupabase, testPassword } from './support/supabase';
+import { accounts, mockSupabase } from './support/supabase';
+import { AuthPage } from './pages/auth.page';
+import { CatalogPage } from './pages/catalog.page';
+import { ClientRequestsPage } from './pages/client-requests.page';
+import { AdminRequestsPage } from './pages/admin-requests.page';
+import { OrdersPage } from './pages/orders.page';
 
-export const test = base.extend<{ api: Awaited<ReturnType<typeof mockSupabase>> }>({
+interface UI {
+  auth: AuthPage;
+  catalog: CatalogPage;
+  requests: ClientRequestsPage;
+  adminRequests: AdminRequestsPage;
+  orders: OrdersPage;
+}
+
+export const test = base.extend<{ api: Awaited<ReturnType<typeof mockSupabase>>; ui: UI }>({
   api: [async ({ page }, use) => {
     await use(await mockSupabase(page));
-  }, { auto: true }]
+  }, { auto: true }],
+  ui: async ({ page }, use) => {
+    await use({
+      auth: new AuthPage(page), catalog: new CatalogPage(page),
+      requests: new ClientRequestsPage(page), adminRequests: new AdminRequestsPage(page),
+      orders: new OrdersPage(page)
+    });
+  }
 });
 
 const { Given, When, Then } = createBdd(test);
 
-function navigation(page: Page) {
-  return page.locator('#primary-navigation');
-}
-
-function requestCard(page: Page, title: string) {
-  return page.locator('article').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
-}
-
-async function submitLogin(page: Page, email: string, password: string) {
-  await page.getByLabel('Correo', { exact: true }).fill(email);
-  await page.getByLabel('Contraseña', { exact: true }).fill(password);
-  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
-}
-
-async function signIn(page: Page, role: keyof typeof accounts) {
-  await page.goto('/login');
-  await submitLogin(page, accounts[role].email, testPassword);
-  await expect(page).toHaveURL(role === 'administrador' ? /\/admin\/dashboard$/ : /\/client\/dashboard$/);
-  await expect(page.getByText(accounts[role].full_name, { exact: true })).toBeVisible();
-}
-
-Given('que visito el catálogo público', async ({ page }) => {
-  await page.goto('/catalogo');
-  await expect(page.getByRole('heading', { name: 'Organizador de escritorio', exact: true })).toBeVisible();
-});
-
+Given('que visito el catálogo público', async ({ ui }) => { await ui.catalog.open(); });
 Given(/^(?:que )?inicio sesión como (cliente|administrador)$/, async (
-  { page }, role: keyof typeof accounts
-) => {
-  await signIn(page, role);
+  { ui }, role: keyof typeof accounts
+) => { await ui.auth.signIn(role); });
+Given('que existe la solicitud pendiente {string}', ({ api }, title: string) => { api.seedPendingRequest(title); });
+Given('que existe una cotización enviada para {string}', ({ api }, title: string) => { api.seedSentQuote(title); });
+Given('que abro mis solicitudes', async ({ ui }) => { await ui.requests.open(); });
+Given('que completo el registro con una contraseña de siete caracteres', async ({ ui }) => {
+  await ui.auth.fillShortRegistration();
 });
 
-Given('que existe la solicitud pendiente {string}', ({ api }, title: string) => {
-  api.seedPendingRequest(title);
+When('agrego {string} al carrito', async ({ ui }, name: string) => { await ui.catalog.add(name); });
+When('intento entrar con una contraseña incorrecta', async ({ ui }) => {
+  await ui.auth.submit(accounts.cliente.email, 'incorrecta');
 });
-
-When('agrego {string} al carrito', async ({ page }, name: string) => {
-  const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name, exact: true }) });
-  await card.getByRole('button', { name: 'Agregar al carrito', exact: true }).click();
-});
-
-Then('veo el formulario de acceso con el catálogo como destino', async ({ page }) => {
-  await expect(page.getByRole('heading', { name: 'Bienvenido de nuevo', exact: true })).toBeVisible();
-  const url = new URL(page.url());
-  expect(url.pathname).toBe('/login');
-  expect(url.searchParams.get('redirectTo')).toBe('/catalogo');
-});
-
-When('intento entrar con una contraseña incorrecta', async ({ page }) => {
-  await submitLogin(page, accounts.cliente.email, 'incorrecta');
-});
-
-Then('veo el error de credenciales y sigo en el formulario de acceso', async ({ page }) => {
-  await expect(page.getByText('Credenciales incorrectas.', { exact: true })).toBeVisible();
-  expect(new URL(page.url()).pathname).toBe('/login');
-});
-
 When('elijo el material {string} y el color {string} en el catálogo', async (
-  { page }, material: string, color: string
-) => {
-  await navigation(page).getByRole('link', { name: 'Catalogo', exact: true }).click();
-  await page.getByRole('combobox', { name: 'Material' }).selectOption(material);
-  await page.getByRole('combobox', { name: 'Color' }).selectOption(color);
-});
-
-When('convierto el carrito en una solicitud', async ({ page }) => {
-  await page.getByRole('button', { name: 'Cotizar', exact: true }).click();
-  await expect(page).toHaveURL(/\/client\/requests\?source=cart$/);
-});
-
-Then('el borrador contiene {string} con material {string} y color {string}', async (
-  { page }, name: string, material: string, color: string
-) => {
-  await expect(page.getByLabel('Titulo', { exact: true })).toHaveValue(`Cotizacion catalogo: ${name}`);
-  const description = await page.getByLabel('Descripcion', { exact: true }).inputValue();
-  expect(description).toContain(`1 x ${name} | Material: ${material} | Color: ${color}`);
-});
-
-When('envío la solicitud', async ({ page }) => {
-  await page.getByRole('button', { name: 'Crear solicitud', exact: true }).click();
-  await expect(page.getByText('Tu solicitud se registro correctamente.', { exact: true })).toBeVisible();
-});
-
-Then('la solicitud {string} aparece como {string} tras recargar', async (
-  { page }, title: string, status: string
-) => {
-  await page.reload();
-  await expect(requestCard(page, title).getByText(status, { exact: true })).toBeVisible();
-});
-
-When('intento abrir los pedidos de administración', async ({ page }) => {
-  await page.goto('/admin/orders');
-});
-
-Then('vuelvo a mi panel de cliente', async ({ page }) => {
-  await expect(page).toHaveURL(/\/client\/dashboard$/);
-  await expect(navigation(page).getByRole('link', { name: 'Perfil', exact: true })).toBeVisible();
-});
-
+  { ui }, material: string, color: string
+) => { await ui.catalog.choose(material, color); });
+When('convierto el carrito en una solicitud', async ({ ui }) => { await ui.catalog.quote(); });
+When('envío la solicitud', async ({ ui }) => { await ui.requests.submit(); });
+When('intento abrir los pedidos de administración', async ({ page }) => { await page.goto('/admin/orders'); });
+When('intento abrir la ruta {string}', async ({ page }, path: string) => { await page.goto(path); });
 When('envío una cotización de {int} pesos para {string}', async (
-  { page }, price: number, title: string
-) => {
-  await navigation(page).getByRole('link', { name: 'Solicitudes', exact: true }).click();
-  await expect(page).toHaveURL(/\/admin\/requests$/);
-  const request = requestCard(page, title);
-  await request.getByRole('button', { name: 'Cotizar', exact: true }).click();
-  await expect(request.getByText('En revision', { exact: true })).toBeVisible();
-  await page.getByLabel('Total', { exact: true }).fill(String(price));
-  await page.getByLabel('Dias estimados', { exact: true }).fill('3');
-  await page.getByRole('button', { name: 'Guardar cotizacion', exact: true }).click();
+  { ui }, price: number, title: string
+) => { await ui.adminRequests.sendQuote(title, price); });
+When('cierro sesión', async ({ ui }) => { await ui.auth.signOut(); });
+When('entro con la cuenta del cliente', async ({ ui }) => { await ui.auth.signIn('cliente'); });
+When('acepto la cotización de {string}', async ({ ui }, title: string) => {
+  await ui.requests.open();
+  await ui.requests.decide(title, 'aceptar');
 });
+When('rechazo la cotización de {string}', async ({ ui }, title: string) => { await ui.requests.decide(title, 'rechazar'); });
+When('cancelo la confirmación de aceptación para {string}', async ({ ui }, title: string) => {
+  await ui.requests.decide(title, 'aceptar', false);
+});
+When('limito el precio máximo a {int} pesos', async ({ ui }, price: number) => { await ui.catalog.setMaxPrice(price); });
+When('restablezco los filtros', async ({ ui }) => { await ui.catalog.resetFilters(); });
+When('recargo la página', async ({ page }) => { await page.reload(); });
+When('vacío el carrito', async ({ ui }) => { await ui.catalog.clearCart(); });
+When('escribo el título {string} y la descripción {string}', async (
+  { ui }, title: string, description: string
+) => { await ui.requests.fill(title, description); });
+When('selecciono un archivo PDF', async ({ ui }) => { await ui.requests.uploadUnsupportedFile(); });
 
+Then('veo el formulario de acceso con el catálogo como destino', async ({ ui }) => { await ui.auth.expectLogin('/catalogo'); });
+Then('veo el formulario de acceso', async ({ ui }) => { await ui.auth.expectLogin(); });
+Then('veo el error de credenciales y sigo en el formulario de acceso', async ({ ui }) => { await ui.auth.expectInvalidCredentials(); });
+Then('no puedo crear la cuenta y veo el error del mínimo', async ({ ui }) => { await ui.auth.expectRegistrationBlocked(); });
+Then('el borrador contiene {string} con material {string} y color {string}', async (
+  { ui }, name: string, material: string, color: string
+) => { await ui.requests.expectDraft(name, material, color); });
+Then('la solicitud {string} aparece como {string} tras recargar', async (
+  { page, ui }, title: string, status: string
+) => { await page.reload(); await ui.requests.expectStatus(title, status); });
+Then('vuelvo a mi panel de cliente', async ({ ui }) => { await ui.auth.expectDashboard('cliente'); });
+Then('vuelvo a mi panel de administrador', async ({ ui }) => { await ui.auth.expectDashboard('administrador'); });
 Then('la solicitud {string} aparece como cotizada por {int} pesos', async (
-  { page }, title: string, price: number
-) => {
-  const request = requestCard(page, title);
-  await expect(request.getByText('Cotizada', { exact: true })).toBeVisible();
-  await expect(request.getByText('Enviada', { exact: true })).toBeVisible();
-  await expect(request.getByText(new RegExp(String(price)))).toBeVisible();
-});
-
-When('cierro sesión', async ({ page }) => {
-  await page.getByRole('button', { name: 'Salir', exact: true }).click();
-  await expect(page).toHaveURL(/\/landing$/);
-  await expect(navigation(page).getByRole('link', { name: 'Ingresar', exact: true })).toBeVisible();
-});
-
-When('entro con la cuenta del cliente', async ({ page }) => {
-  await signIn(page, 'cliente');
-});
-
-When('acepto la cotización de {string}', async ({ page }, title: string) => {
-  await navigation(page).getByRole('link', { name: 'Solicitudes', exact: true }).click();
-  const accept = requestCard(page, title).getByRole('button', { name: 'Aceptar', exact: true });
-  await Promise.all([
-    page.waitForEvent('dialog').then((dialog) => dialog.accept()),
-    accept.click()
-  ]);
-  await expect(page.getByText('Cotizacion aceptada. Tu pedido se creo correctamente.', { exact: true }))
-    .toBeVisible();
-});
-
+  { ui }, title: string, price: number
+) => { await ui.adminRequests.expectQuote(title, price); });
 Then('veo el pedido {string} con estado {string} y cotización {string}', async (
-  { page }, title: string, orderStatus: string, quoteStatus: string
-) => {
-  await navigation(page).getByRole('link', { name: 'Pedidos', exact: true }).click();
-  await expect(page).toHaveURL(/\/client\/orders$/);
-  const row = page.getByRole('row').filter({ has: page.getByRole('cell', { name: title, exact: true }) });
-  await expect(row.getByRole('cell', { name: orderStatus, exact: true })).toBeVisible();
-  await expect(row.getByRole('cell', { name: quoteStatus, exact: true })).toBeVisible();
-});
+  { ui }, title: string, orderStatus: string, quoteStatus: string
+) => { await ui.orders.expectOrder(title, orderStatus, quoteStatus); });
+Then('no hay productos que coincidan', async ({ ui }) => { await ui.catalog.expectNoProducts(); });
+Then('vuelve a mostrarse {string}', async ({ ui }, name: string) => { await expect(ui.catalog.product(name)).toBeVisible(); });
+Then('el carrito tiene {int} unidades de {string} y {string} con total {int} pesos', async (
+  { ui }, quantity: number, material: string, color: string, total: number
+) => { await ui.catalog.expectCart(quantity, total, material, color); });
+Then('el carrito está vacío', async ({ ui }) => { await ui.catalog.expectEmptyCart(); });
+Then('no puedo enviar la solicitud', async ({ ui }) => { await expect(ui.requests.submitButton).toBeDisabled(); });
+Then('veo el error de formato y el selector queda vacío', async ({ ui }) => { await ui.requests.expectUnsupportedFile(); });
+Then('la cotización de {string} aparece como {string}', async (
+  { ui }, title: string, status: string
+) => { await ui.requests.expectQuoteStatus(title, status); });
+Then('no tengo pedidos', async ({ ui }) => { await ui.orders.expectEmpty(); });
