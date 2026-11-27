@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:system": "bddgen && playwright test"
   },
   "private": true,
   "packageManager": "npm@10.9.2",
@@ -26,10 +27,13 @@
     "@angular/build": "^21.2.3",
     "@angular/cli": "^21.2.3",
     "@angular/compiler-cli": "^21.2.0",
+    "@playwright/test": "1.65.1",
+    "@vitest/coverage-v8": "4.1.0",
     "angular-eslint": "^21.4.0",
     "eslint": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
     "jsdom": "^28.0.0",
+    "playwright-bdd": "9.2.1",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.62.1",
