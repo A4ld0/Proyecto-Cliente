@@ -19,3 +19,13 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps --only-shell chromium
       - run: npm run test:system
+      - name: Save system test reports and failure evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: system-test-results
+          path: |
+            tmp/system-report/
+            tmp/system-results/
+            tmp/system-results.xml
+          retention-days: 14

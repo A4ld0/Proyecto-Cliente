@@ -48,6 +48,8 @@ jobs:
             --coverage-exclude='**/*.spec.ts'
             --coverage-reporters=json-summary
             --coverage-reporters=text-summary
+            --coverage-reporters=html
+            --coverage-reporters=lcovonly
           )
 
           (cd tmp/coverage-base && npm test -- "${coverage_args[@]}")
@@ -57,3 +59,10 @@ jobs:
           node scripts/check-coverage.mjs
           tmp/coverage-base/coverage/printlab/coverage-summary.json
           coverage/printlab/coverage-summary.json
+      - name: Save the pull request coverage report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: coverage-report
+          path: coverage/printlab/
+          retention-days: 14

@@ -8,6 +8,9 @@
     "watch": "ng build --watch --configuration development",
     "lint": "ng lint",
     "test": "ng test",
+    "test:ci": "ng test --watch=false",
+    "test:coverage": "ng test --watch=false --coverage --coverage-include=src/app/**/*.ts --coverage-exclude=**/*.spec.ts --coverage-reporters=json-summary --coverage-reporters=text-summary --coverage-reporters=html --coverage-reporters=lcovonly",
+    "test:coverage-guard": "node --test scripts/check-coverage.test.mjs",
     "test:system": "bddgen && playwright test"
   },
   "private": true,
