@@ -12,6 +12,7 @@
     "test:coverage": "ng test --watch=false --coverage --coverage-include=src/app/**/*.ts --coverage-exclude=**/*.spec.ts --coverage-reporters=json-summary --coverage-reporters=text-summary --coverage-reporters=html --coverage-reporters=lcovonly",
     "test:coverage-guard": "node --test scripts/check-coverage.test.mjs",
     "test:system": "bddgen && playwright test",
+    "test:system:check": "tsc -p tsconfig.system.json",
     "db:start": "supabase start --exclude studio,postgres-meta,imgproxy,edge-runtime,logflare,vector,supavisor",
     "db:stop": "supabase stop",
     "db:status": "supabase status"
@@ -36,6 +37,7 @@
     "@angular/compiler-cli": "^21.2.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "1.65.1",
+    "@types/node": "24.19.4",
     "@vitest/coverage-v8": "4.1.0",
     "angular-eslint": "^21.4.0",
     "eslint": "^10.0.0",

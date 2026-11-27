@@ -10,6 +10,7 @@ El sistema esta orientado a digitalizar el flujo de trabajo entre cliente y admi
 - [Rúbrica original de 30 puntos](docs/rubricas/README.md) y [matriz de cumplimiento](docs/rubrica.md).
 - [Plan, roles del equipo y cronograma](docs/implementacion.md). Entrega: **2 de diciembre de 2026**.
 - [Cómo ejecutar las pruebas y consultar reportes](docs/pruebas.md).
+- [BDD: cinco features, 15 escenarios y cinco Page Objects](system-tests/README.md), con [reporte M6](docs/milestones/M6/e2e-test-report.md).
 - [Propuesta, requisitos y arquitectura de M1](docs/milestones/M1/proposal.md).
 - [Estrategia y plan de caja negra de M3](docs/milestones/M3/test-plan.md), [28 casos](docs/milestones/M3/test-cases.md) y [trazabilidad](docs/milestones/M3/traceability-matrix.md).
 - [Contribución, hooks y proceso de revisión](CONTRIBUTING.md).

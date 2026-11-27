@@ -19,7 +19,7 @@ export default defineConfig({
   use: {
     baseURL,
     trace: 'retain-on-failure',
-    screenshot: 'only-on-failure'
+    screenshot: { mode: 'on', fullPage: true }
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } }

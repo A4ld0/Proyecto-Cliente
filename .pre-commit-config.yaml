@@ -9,7 +9,7 @@ repos:
         entry: node node_modules/@angular/cli/bin/ng.js lint
         language: system
         pass_filenames: false
-        files: '^(src/.*\.(ts|html)|tests/data/.*\.json|eslint\.config\.js|angular\.json|package(-lock)?\.json)$'
+        files: '^(src/.*\.(ts|html)|system-tests/.*\.ts|playwright\.config\.ts|tests/data/.*\.json|eslint\.config\.js|angular\.json|package(-lock)?\.json)$'
         stages: [pre-commit]
       - id: coverage-guard
         name: Contrato del comparador de cobertura
