@@ -1,0 +1,59 @@
+name: Coverage
+
+on: pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the pull request merge commit
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Check out the pull request base
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: tmp/coverage-base
+          persist-credentials: false
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            tmp/coverage-base/package-lock.json
+      - name: Install pull request dependencies
+        run: npm ci
+      - name: Install base dependencies
+        working-directory: tmp/coverage-base
+        shell: bash
+        run: |
+          # Older base commits may not declare a coverage provider.
+          if ! node -e "process.exit(require('./package.json').devDependencies?.['@vitest/coverage-v8'] ? 0 : 1)"; then
+            vitest_version=$(node -p "require('./package-lock.json').packages['node_modules/vitest'].version")
+            npm install --package-lock-only --save-dev --save-exact "@vitest/coverage-v8@$vitest_version"
+          fi
+          npm ci
+      - name: Measure coverage for both revisions
+        shell: bash
+        run: |
+          coverage_args=(
+            --watch=false
+            --coverage
+            --coverage-include='src/app/**/*.ts'
+            --coverage-exclude='**/*.spec.ts'
+            --coverage-reporters=json-summary
+            --coverage-reporters=text-summary
+          )
+
+          (cd tmp/coverage-base && npm test -- "${coverage_args[@]}")
+          npm test -- "${coverage_args[@]}"
+      - name: Check coverage regressions and the 90% minimum
+        run: >-
+          node scripts/check-coverage.mjs
+          tmp/coverage-base/coverage/printlab/coverage-summary.json
+          coverage/printlab/coverage-summary.json

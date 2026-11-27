@@ -32,10 +32,10 @@
       </div>
 
       <div class="actions">
-        <button class="button-secondary" type="button" (click)="prefillFromCart()">
+        <button class="button-secondary" type="button" [disabled]="isSaving()" (click)="prefillFromCart()">
           Usar datos en la solicitud
         </button>
-        <button class="button-ghost" type="button" (click)="clearCartDraft()">
+        <button class="button-ghost" type="button" [disabled]="isSaving()" (click)="clearCartDraft()">
           Vaciar carrito
         </button>
       </div>
@@ -99,6 +99,7 @@
             id="attachment"
             type="file"
             accept="image/png,image/jpeg,image/webp,.stl,model/stl"
+            [disabled]="isSaving()"
             (change)="onAttachmentSelected($event)"
           />
           <p class="field-hint">Puedes subir PNG, JPG, WEBP o STL. Maximo 20 MB.</p>
@@ -125,7 +126,7 @@
             {{ isSaving() ? 'Guardando...' : editingId() ? 'Actualizar' : 'Crear solicitud' }}
           </button>
 
-          <button class="button-ghost" type="button" (click)="resetForm()">Limpiar</button>
+          <button class="button-ghost" type="button" [disabled]="isSaving()" (click)="resetForm()">Limpiar</button>
         </div>
       </form>
     </section>
@@ -203,7 +204,7 @@
                         <button
                           class="button"
                           type="button"
-                          [disabled]="quoteActionId() === quote.id"
+                          [disabled]="quoteActionId() !== null || isSaving()"
                           (click)="acceptQuote(quote)"
                         >
                           {{ quoteActionId() === quote.id ? 'Procesando...' : 'Aceptar' }}
@@ -211,7 +212,7 @@
                         <button
                           class="button-danger"
                           type="button"
-                          [disabled]="quoteActionId() === quote.id"
+                          [disabled]="quoteActionId() !== null || isSaving()"
                           (click)="rejectQuote(quote)"
                         >
                           Rechazar
@@ -233,16 +234,16 @@
 
                 <div class="actions request-actions">
                   @if (canEditRequest(request)) {
-                    <button class="button-secondary" type="button" (click)="editRequest(request)">
+                    <button class="button-secondary" type="button" [disabled]="isSaving()" (click)="editRequest(request)">
                       Editar
                     </button>
                   }
                   @if (request.status === 'PENDING') {
-                    <button class="button-danger" type="button" (click)="deleteRequest(request)">
+                    <button class="button-danger" type="button" [disabled]="isSaving()" (click)="deleteRequest(request)">
                       Eliminar
                     </button>
                   } @else if (canCancelRequest(request)) {
-                    <button class="button-danger" type="button" (click)="cancelRequest(request)">
+                    <button class="button-danger" type="button" [disabled]="isSaving()" (click)="cancelRequest(request)">
                       Cancelar
                     </button>
                   }
