@@ -55,7 +55,7 @@ con Auth, PostgreSQL, RPC y Storage se ejecutará en Supabase local, con datos f
 | Interfaz | Angular 21, TypeScript, SCSS | Conserva las pantallas y formularios del proyecto autorizado. |
 | Backend | Supabase Auth, REST/PostgREST, PostgreSQL, Storage y Realtime | Es el backend real de la aplicación; ofrece contratos de autenticación, datos y archivos que deben probarse. |
 | Unitarias e integración de frontend | Vitest, Angular TestBed y HttpTestingController | Permiten probar lógica y comunicación HTTP con errores repetibles. |
-| Integración de backend | Supabase CLI y Docker | Aíslan usuarios y registros para comprobar persistencia y permisos. Preparación pendiente. |
+| Integración de backend | Supabase CLI y Docker | Entorno local preparado para aislar usuarios y registros. Esquema y pruebas de persistencia/permisos pendientes del SQL. |
 | Sistema | Gherkin, playwright-bdd y Playwright | Vinculan escenarios de negocio con recorridos observables del navegador. |
 | Calidad | ESLint, pre-commit, Conventional Commits, GitHub Actions | Detectan fallos antes de integrar y conservan evidencia por PR. |
 | Cobertura | V8 y comparador de métricas | Miden código de aplicación y rechazan regresiones entre base y PR. |

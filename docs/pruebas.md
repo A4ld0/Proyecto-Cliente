@@ -15,6 +15,11 @@ En PowerShell, si los argumentos después de `--` no llegan a Angular, usar `npm
 
 ## Comandos
 
+La preparación de [Supabase local](../supabase/README.md) usa `npm run db:start`,
+`npm run db:status` y `npm run db:stop`. El arranque se comprobó, pero las pruebas
+reales de reglas de negocio esperan las migraciones que compartirá el equipo.
+Los comandos de la siguiente tabla pueden ejecutarse sin esa instancia.
+
 | Comando | Qué verifica | Resultado |
 | --- | --- | --- |
 | `npm run lint` | TypeScript y plantillas con ESLint y Angular ESLint. | Salida de consola; falla ante infracciones. |

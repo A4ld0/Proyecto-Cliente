@@ -11,7 +11,10 @@
     "test:ci": "ng test --watch=false",
     "test:coverage": "ng test --watch=false --coverage --coverage-include=src/app/**/*.ts --coverage-exclude=**/*.spec.ts --coverage-reporters=json-summary --coverage-reporters=text-summary --coverage-reporters=html --coverage-reporters=lcovonly",
     "test:coverage-guard": "node --test scripts/check-coverage.test.mjs",
-    "test:system": "bddgen && playwright test"
+    "test:system": "bddgen && playwright test",
+    "db:start": "supabase start --exclude studio,postgres-meta,imgproxy,edge-runtime,logflare,vector,supavisor",
+    "db:stop": "supabase stop",
+    "db:status": "supabase status"
   },
   "private": true,
   "packageManager": "npm@10.9.2",
@@ -40,6 +43,7 @@
     "jsdom": "^28.0.0",
     "playwright-bdd": "9.2.1",
     "prettier": "^3.8.1",
+    "supabase": "3.4.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.62.1",
     "vitest": "^4.0.8"

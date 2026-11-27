@@ -33,9 +33,13 @@ Las instrucciones deben ser reproducidas por otro integrante antes de cerrar M2.
 
 La aplicación usa Supabase como backend autorizado, con perfiles, servicios y
 guards existentes. Las pruebas históricas de HTTP usan respuestas simuladas.
-Docker Desktop 28.3.2 está disponible; se prepara una instancia local para
-verificar Auth, PostgreSQL/RLS, RPC y Storage con datos ficticios.
+Docker Desktop con motor 28.3.2 está disponible. La instancia local inició
+PostgreSQL, Auth, REST, Storage y Realtime y su salud de Auth respondió HTTP 200.
+La [configuración y CLI fijada](../../../supabase/README.md) permiten reproducir
+el arranque. Las migraciones y pruebas de negocio esperan el SQL que el equipo
+compartirá posteriormente.
 La instancia local no cambia por sí sola la conexión habitual del frontend.
+Se detuvo conservando sus datos mientras se espera el SQL.
 
 ## Pendientes para cerrar M2
 

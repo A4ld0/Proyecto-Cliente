@@ -13,6 +13,7 @@ El sistema esta orientado a digitalizar el flujo de trabajo entre cliente y admi
 - [Propuesta, requisitos y arquitectura de M1](docs/milestones/M1/proposal.md).
 - [Estrategia y plan de caja negra de M3](docs/milestones/M3/test-plan.md), [28 casos](docs/milestones/M3/test-cases.md) y [trazabilidad](docs/milestones/M3/traceability-matrix.md).
 - [Contribución, hooks y proceso de revisión](CONTRIBUTING.md).
+- [Preparación de Supabase local de pruebas](supabase/README.md); las migraciones esperan el SQL del backend existente.
 
 ## Equipo
 
