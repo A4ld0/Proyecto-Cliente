@@ -1,0 +1,20 @@
+[
+  { "id": "valid-base", "field": "full_name", "value": "Cliente Uno", "valid": true },
+  { "id": "name-2", "field": "full_name", "value": "A", "repeat": 2, "valid": false, "error": "minlength" },
+  { "id": "name-3", "field": "full_name", "value": "A", "repeat": 3, "valid": true },
+  { "id": "name-80", "field": "full_name", "value": "A", "repeat": 80, "valid": true },
+  { "id": "name-81", "field": "full_name", "value": "A", "repeat": 81, "valid": false, "error": "maxlength" },
+  { "id": "email-empty", "field": "email", "value": "", "valid": false, "error": "required" },
+  { "id": "email-invalid", "field": "email", "value": "sin-arroba", "valid": false, "error": "email" },
+  { "id": "password-7", "field": "password", "value": "Abc1234", "valid": false, "error": "minlength" },
+  { "id": "password-8", "field": "password", "value": "Abc12345", "valid": true },
+  { "id": "password-9", "field": "password", "value": "Abc123456", "valid": true },
+  { "id": "password-letters", "field": "password", "value": "abcdefgh", "valid": false, "error": "pattern" },
+  { "id": "password-digits", "field": "password", "value": "12345678", "valid": false, "error": "pattern" },
+  { "id": "phone-empty", "field": "phone", "value": "", "valid": true },
+  { "id": "phone-6", "field": "phone", "value": "1", "repeat": 6, "valid": false, "error": "pattern" },
+  { "id": "phone-7", "field": "phone", "value": "1", "repeat": 7, "valid": true },
+  { "id": "phone-20", "field": "phone", "value": "1", "repeat": 20, "valid": true },
+  { "id": "phone-21", "field": "phone", "value": "1", "repeat": 21, "valid": false, "error": "pattern" },
+  { "id": "phone-letters", "field": "phone", "value": "55ABC123", "valid": false, "error": "pattern" }
+]

@@ -29,12 +29,11 @@ Los roles distribuyen responsabilidades; los resultados y contribuciones se regi
 
 ## Integración de ramas
 
-1. Partir de `main` actualizado en `feat/rubric-foundation`.
-2. Incorporar localmente `ci/tests` y `ci/eslint`, preservando su historial.
-3. Resolver `package.json` y `package-lock.json` con los scripts y dependencias de ambas ramas.
-4. Ejecutar `npm ci`, lint, pruebas, comparador, cobertura, Playwright y build.
-5. Publicar la propuesta de integración por PR y verificar CI sobre su SHA final.
-6. Registrar revisión por otra persona y acordar la integración de los PR originales, evitando duplicar cambios.
+1. Actualizar `main` y crear una rama temática para cada bloque pendiente.
+2. Añadir cambios nuevos, sus pruebas y documentos sin volver a incorporar las ramas ya integradas.
+3. Ejecutar las verificaciones pertinentes y publicar un PR hacia `main`.
+4. Verificar CI sobre el SHA final y registrar la revisión independiente.
+5. Integrar por PR y actualizar la matriz con enlaces de evidencia.
 
 Una revisión debe evaluar los cambios incluidos en su PR. El cumplimiento total del proyecto se
 comprueba con la [matriz](rubrica.md). Cada aprobación y fusión se registra cuando realmente ocurre.
@@ -43,6 +42,11 @@ El 26 de noviembre se aprobaron e integraron primero los PR #2 y #3. La rama de 
 `feat/rubric-followup` parte de ese main y contiene únicamente el nuevo commit de documentación,
 matriz y reportes. Las ramas `feat/rubric-foundation` e `integration/quality-base` conservan
 la preparación anterior; no son la base del PR de seguimiento.
+
+El PR [#4](https://github.com/A4ld0/Proyecto-Cliente/pull/4) también quedó integrado
+en `main` el 26 de noviembre, con commit `fceb01c`. Sus workflows guardaron
+reportes unitarios, de cobertura y de sistema correctamente. El bloque M1–M3
+parte de ese `main` en `docs/m1-m3-testing-plan`.
 
 ## Supabase de pruebas
 

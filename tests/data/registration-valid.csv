@@ -1,0 +1,4 @@
+full_name,email,password,phone,expected_result
+Cliente Uno,cliente1@example.test,Prueba123,,valid
+Cliente Dos,cliente2@example.test,Prueba456,5512345678,valid
+ABC,minimo@example.test,Abc12345,1234567,valid

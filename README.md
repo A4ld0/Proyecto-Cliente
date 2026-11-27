@@ -10,6 +10,24 @@ El sistema esta orientado a digitalizar el flujo de trabajo entre cliente y admi
 - [Rúbrica original de 30 puntos](docs/rubricas/README.md) y [matriz de cumplimiento](docs/rubrica.md).
 - [Plan, roles del equipo y cronograma](docs/implementacion.md). Entrega: **2 de diciembre de 2026**.
 - [Cómo ejecutar las pruebas y consultar reportes](docs/pruebas.md).
+- [Propuesta, requisitos y arquitectura de M1](docs/milestones/M1/proposal.md).
+- [Estrategia y plan de caja negra de M3](docs/milestones/M3/test-plan.md), [28 casos](docs/milestones/M3/test-cases.md) y [trazabilidad](docs/milestones/M3/traceability-matrix.md).
+- [Contribución, hooks y proceso de revisión](CONTRIBUTING.md).
+- [Preparación de Supabase local de pruebas](supabase/README.md); las migraciones esperan el SQL del backend existente.
+
+## Equipo
+
+Nombres provisionales por acuerdo del equipo; contactos y cuentas por completar.
+
+| Integrante | Responsabilidad principal |
+| --- | --- |
+| Integrante 1 | Coordinación y documentación. |
+| Integrante 2 | QA, integración y TDD. |
+| Integrante 3 | Frontend y pruebas de sistema. |
+| Integrante 4 | DevOps, CI y calidad. |
+| Integrante 5 | Rendimiento y preparación de demo. |
+
+Todos participan en la exposición. Detalle de roles en la [propuesta](docs/milestones/M1/proposal.md).
 
 ## Entrega
 
