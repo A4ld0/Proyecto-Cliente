@@ -1,0 +1,9 @@
+full_name,email,password,phone,expected_error
+Cliente Uno,sin-arroba,Prueba123,,email
+Cliente Uno,,Prueba123,,required
+Cliente Uno,cliente1@example.test,Abc1234,,minlength
+Cliente Uno,cliente1@example.test,abcdefgh,,pattern
+Cliente Uno,cliente1@example.test,12345678,,pattern
+AB,cliente1@example.test,Prueba123,,minlength
+Cliente Uno,cliente1@example.test,Prueba123,123456,pattern
+Cliente Uno,cliente1@example.test,Prueba123,55ABC123,pattern

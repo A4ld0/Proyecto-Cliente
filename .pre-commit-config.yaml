@@ -1,0 +1,25 @@
+minimum_pre_commit_version: '4.7.0'
+default_install_hook_types: [pre-commit, commit-msg]
+
+repos:
+  - repo: local
+    hooks:
+      - id: eslint
+        name: ESLint de la aplicación
+        entry: node node_modules/@angular/cli/bin/ng.js lint
+        language: system
+        pass_filenames: false
+        files: '^(src/.*\.(ts|html)|tests/data/.*\.json|eslint\.config\.js|angular\.json|package(-lock)?\.json)$'
+        stages: [pre-commit]
+      - id: coverage-guard
+        name: Contrato del comparador de cobertura
+        entry: node --test scripts/check-coverage.test.mjs
+        language: system
+        pass_filenames: false
+        files: '^(scripts/check-coverage.*\.mjs|\.github/workflows/coverage\.yml)$'
+        stages: [pre-commit]
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: 33b50eb042bee26eac0ee96ad84aa9c1b4dccdd8 # v4.5.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
