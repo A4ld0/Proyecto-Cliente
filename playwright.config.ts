@@ -11,10 +11,15 @@ const testDir = defineBddConfig({
 export default defineConfig({
   testDir,
   outputDir: 'tmp/system-results',
-  reporter: 'list',
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: 'tmp/system-report', open: 'never' }],
+    ['junit', { outputFile: 'tmp/system-results.xml' }]
+  ],
   use: {
     baseURL,
-    trace: 'retain-on-failure'
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure'
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } }
